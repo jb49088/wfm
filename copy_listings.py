@@ -2,34 +2,35 @@ import pyperclip
 
 from utils import (
     build_id_to_name_mapping,
-    convert_ids_to_item_names,
-    gather_user_listings,
+    extract_user_listings,
 )
 
 
-def format_items(items: list[str]) -> list[str]:
-    """Format items with surrounding brackets."""
-    formatted_items = ["[" + listing + "]" for listing in items]
+def convert_listings_to_links(
+    listings: dict[str, dict[str, int | bool | str]],
+) -> list[str]:
+    """Sort and format item names with surrounding brackets."""
+    links = ["[" + listing + "]" for listing in listings]
 
-    return formatted_items
+    return sorted(links)
 
 
-def chunk_items(formatted_items: list[str]) -> list[str]:
+def chunk_links(links: list[str]) -> list[str]:
     """Break item list into 300 character chunks."""
     chunks = []
     current_chunk = []
     current_length = 0
 
-    for item in formatted_items:
-        item_length = len(item) + 1  # +1 for the space
+    for link in links:
+        link_length = len(link) + 1  # +1 for the space
 
-        if current_length + item_length > 300:
+        if current_length + link_length > 300:
             chunks.append(" ".join(current_chunk))
             current_chunk = []
             current_length = 0
 
-        current_chunk.append(item)
-        current_length += item_length
+        current_chunk.append(link)
+        current_length += link_length
 
     if current_chunk:
         chunks.append(" ".join(current_chunk))
@@ -37,7 +38,7 @@ def chunk_items(formatted_items: list[str]) -> list[str]:
     return chunks
 
 
-def copy_items(chunks: list[str]) -> None:
+def copy_to_clipboard(chunks: list[str]) -> None:
     """Copy items to clipboard."""
     for i, chunk in enumerate(chunks, 1):
         pyperclip.copy(chunk)
@@ -52,11 +53,10 @@ def copy_items(chunks: list[str]) -> None:
 def copy_listings() -> None:
     """Main entry point."""
     id_to_name = build_id_to_name_mapping()
-    listings = gather_user_listings("bhwsg")
-    items = convert_ids_to_item_names(id_to_name, listings)
-    formatted_items = format_items(items)
-    chunks = chunk_items(formatted_items)
-    copy_items(chunks)
+    listings = extract_user_listings("bhwsg", id_to_name)
+    links = convert_listings_to_links(listings)
+    chunks = chunk_links(links)
+    copy_to_clipboard(chunks)
 
 
 if __name__ == "__main__":
