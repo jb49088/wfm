@@ -9,10 +9,15 @@ from utils import (
 
 
 def convert_listings_to_links(listings):
-    """Sort and format item names with surrounding brackets."""
-    links = ["[" + listing + "]" for listing in listings]
-
-    return sorted(links)
+    """Process, format, and sort item names for ingame pasting."""
+    return sorted(
+        [
+            f"[{listing.replace(' Blueprint', '')}]"
+            if "Blueprint" in listing
+            else f"[{listing}]"
+            for listing in listings
+        ]
+    )
 
 
 def chunk_links(links):
