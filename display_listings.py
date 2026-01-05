@@ -23,19 +23,22 @@ def format_listings(listings):
             column_widths[key] = max(column_widths[key], len(row[key]), len(key))
 
     # Account for spacing
-    for key in column_widths:
-        column_widths[key] += 2
+    column_widths = {key: width + 2 for key, width in column_widths.items()}
 
-    header_row = [
-        key.title().center((value), " ") for key, value in column_widths.items()
-    ]
+    separator_row = ["-" * width for width in column_widths.values()]
 
+    header_row = [key.title().center((width)) for key, width in column_widths.items()]
+
+    print(f"+{'+'.join(separator_row)}+")
     print(f"|{'|'.join(header_row)}|")
+    print(f"+{'+'.join(separator_row)}+")
 
     for row in data_rows:
         data_row = [row[key].ljust(column_widths[key]) for key in row]
 
         print(f"|{'|'.join(data_row)}|")
+
+    print(f"+{'+'.join(separator_row)}+")
 
 
 def display_listings():
