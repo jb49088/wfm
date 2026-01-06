@@ -8,15 +8,15 @@ from utils import (
 def build_rows(listings):
     """Build rows for table rendering."""
     data_rows = []
-    for i, (item, details) in enumerate(listings.items(), start=1):
+    for i, listing in enumerate(listings, start=1):
         row = {
             "id": str(i),
-            "item": item,
-            "price": str(details["price"]),
-            "rank": str(details["rank"]) if details["rank"] is not None else "N/A",
-            "quantity": str(details["quantity"]),
-            "updated": str(details["updated"]),
-            "created": str(details["created"]),
+            "item": listing["item"],
+            "price": str(listing["price"]),
+            "rank": str(listing["rank"]) if listing["rank"] is not None else "N/A",
+            "quantity": str(listing["quantity"]),
+            "updated": str(listing["updated"]),
+            "created": str(listing["created"]),
         }
         data_rows.append(row)
 

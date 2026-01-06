@@ -41,15 +41,15 @@ def expand_item_sets(user_listings, all_items):
     expanded_listings = []
 
     for listing in user_listings:
-        if listing.endswith(" Set"):
-            set_base = get_base_name(listing)
+        if listing["item"].endswith(" Set"):
+            set_base = get_base_name(listing["item"])
             for item in all_items:
                 item_name = item["i18n"]["en"]["name"]
                 item_base = get_base_name(item_name)
-                if set_base == item_base and item_name != listing:
+                if set_base == item_base and item_name != listing["item"]:
                     expanded_listings.append(item_name)
         else:
-            expanded_listings.append(listing)
+            expanded_listings.append(listing["item"])
 
     return expanded_listings
 

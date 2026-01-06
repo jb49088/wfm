@@ -19,17 +19,20 @@ def extract_user_listings(user, id_to_name):
     r = requests.get(f"https://api.warframe.market/v2/orders/user/{user.lower()}")
     r.raise_for_status()
 
-    user_listings = {}
+    user_listings = []
 
     for listing in r.json()["data"]:
         if listing["type"] == "sell":
-            user_listings[id_to_name[listing["itemId"]]] = {
-                "price": listing.get("platinum", 0),
-                "rank": listing.get("rank"),
-                "quantity": listing.get("quantity", 1),
-                "visible": listing.get("visible", False),
-                "created": listing.get("createdAt", ""),
-                "updated": listing.get("updatedAt", ""),
-            }
+            user_listings.append(
+                {
+                    "item": id_to_name[listing.get("itemId", "")],
+                    "itemId": listing.get("itemId", ""),
+                    "price": listing.get("platinum", 0),
+                    "rank": listing.get("rank"),
+                    "quantity": listing.get("quantity", 1),
+                    "created": listing.get("createdAt", ""),
+                    "updated": listing.get("updatedAt", ""),
+                }
+            )
 
     return user_listings
