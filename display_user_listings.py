@@ -8,8 +8,9 @@ from utils import (
 def build_rows(listings):
     """Build rows for table rendering."""
     data_rows = []
-    for item, details in listings.items():
+    for i, (item, details) in enumerate(listings.items(), start=1):
         row = {
+            "id": str(i),
             "item": item,
             "price": str(details["price"]),
             "rank": str(details["rank"]) if details["rank"] is not None else "N/A",
@@ -25,6 +26,7 @@ def build_rows(listings):
 def determine_widths(data_rows):
     """Determine maximum width for each colunm."""
     column_widths = {
+        "id": 0,
         "item": 0,
         "price": 0,
         "rank": 0,
@@ -47,7 +49,10 @@ def display_listings(data_rows, column_widths):
     """Display listings in a sql-like table."""
     separator_row = ["-" * width for width in column_widths.values()]
 
-    header_row = [key.title().center((width)) for key, width in column_widths.items()]
+    header_row = [
+        key.title().center(width) if key != "id" else key.upper().center(width)
+        for key, width in column_widths.items()
+    ]
 
     print(f"+{'+'.join(separator_row)}+")
     print(f"|{'|'.join(header_row)}|")
