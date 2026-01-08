@@ -41,7 +41,7 @@ def copy_listing(user, data_rows):
                 "WTB",
                 f"{row['item']}",
                 f"Rank: {row['rank']}" if row.get("rank") else "",
-                f"Price: {row['price']}p",
+                f"Price: {row['price']}",
             ]
             segments = [s for s in segments if s]
             message = f"/w {user} {' | '.join(segments)}"
