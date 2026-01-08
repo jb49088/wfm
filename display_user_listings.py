@@ -71,10 +71,11 @@ def display_listings(data_rows, column_widths, sort_by, order):
         for key, value in row.items():
             if key == "price":
                 value = f"{value}p"
-            if key in {"price", "rank", "quantity"}:
-                data_row.append(f"{value} ".rjust(column_widths[key]))
+            if key in ("price", "rank", "quantity"):
+                formatted = f"{value} ".rjust(column_widths[key])
             else:
-                data_row.append(f" {value}".ljust(column_widths[key]))
+                formatted = f" {value}".ljust(column_widths[key])
+            data_row.append(formatted)
 
         print(f"|{'|'.join(data_row)}|")
 
