@@ -78,7 +78,7 @@ def determine_widths(data_rows, sort_by):
         for key in row:
             column_widths[key] = max(
                 column_widths[key],
-                len(row[key]) + 1 if key == "price" else len(row[key]),  # +1 for p
+                len(row[key]),
                 len(key) + 2 if key == sort_by else len(key),  # +2 for arrow
             )
 
@@ -108,8 +108,6 @@ def display_listings(data_rows, column_widths, sort_by, order):
     for row in data_rows:
         data_row = []
         for key, value in row.items():
-            if key == "price":
-                value = f"{value}p"
             if key in ("price", "rank", "quantity"):
                 formatted = f"{value} ".rjust(column_widths[key])
             else:

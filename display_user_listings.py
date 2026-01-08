@@ -18,7 +18,7 @@ def build_rows(listings, max_ranks, copy=True):
         row = {
             "#": str(i),
             "item": listing["item"],
-            "price": str(listing["price"]),
+            "price": f"{listing['price']}p",
             "rank": f"{listing['rank']}/{max_ranks[listing['item']]}"
             if listing["rank"] is not None
             else "",
