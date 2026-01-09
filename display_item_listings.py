@@ -8,6 +8,7 @@ from utils import (
     get_all_items,
 )
 
+STATUS_MAPPING = {"offline": "Offline", "online": "Online", "ingame": "In Game"}
 RIGHT_ALLIGNED_COLUMNS = ("price", "rank", "quantity", "reputation")
 
 
@@ -44,7 +45,7 @@ def build_rows(listings, max_ranks, copy=True):
         row = {
             "#": str(i),
             "seller": listing["seller"],
-            "status": listing["status"],
+            "status": STATUS_MAPPING[listing["status"]],
             "item": listing["item"],
             "price": f"{listing['price']}p",
             "rank": f"{listing['rank']}/{max_ranks[listing['item']]}"
