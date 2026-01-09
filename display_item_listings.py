@@ -7,8 +7,20 @@ from utils import (
     determine_widths,
     display_listings,
     get_all_items,
+    sort_listings,
 )
 
+DEFAULT_ORDERS = {
+    "seller": "asc",
+    "reputation": "desc",
+    "status": "asc",
+    "item": "asc",
+    "price": "asc",
+    "rank": "desc",
+    "quantity": "desc",
+    "created": "desc",
+    "updated": "desc",
+}
 STATUS_MAPPING = {"offline": "Offline", "online": "Online", "ingame": "In Game"}
 RIGHT_ALLIGNED_COLUMNS = ("price", "rank", "quantity", "reputation")
 
@@ -46,41 +58,6 @@ def filter_item_listings(item_listings, ingame_only):
             listing for listing in item_listings if listing["status"] == "ingame"
         ]
     return item_listings
-
-
-def sort_item_listings(listings, sort_by, order):
-    """Sort listings with sane defaults."""
-    default_orders = {
-        "seller": "asc",
-        "reputation": "desc",
-        "status": "asc",
-        "item": "asc",
-        "price": "asc",
-        "rank": "desc",
-        "quantity": "desc",
-        "created": "desc",
-        "updated": "desc",
-    }
-
-    # Use default order if none provided
-    if order is None:
-        order = default_orders[sort_by]
-
-    is_desc = order == "desc"
-
-    sorted_listings = list(
-        sorted(
-            listings,
-            key=lambda listing: listing[sort_by]
-            if listing[sort_by] is not None
-            else float("-inf")
-            if is_desc
-            else float("inf"),
-            reverse=is_desc,
-        )
-    )
-
-    return (sorted_listings, sort_by, order)
 
 
 def build_rows(listings, max_ranks, copy):
@@ -137,8 +114,8 @@ def display_item_listings(
     max_ranks = build_name_to_max_rank_mapping(all_items, id_to_name)
     item_listings = extract_item_listings(item, id_to_name)
     filtered_item_listings = filter_item_listings(item_listings, ingame_only)
-    sorted_item_listings, sort_by, order = sort_item_listings(
-        filtered_item_listings, sort_by, order
+    sorted_item_listings, sort_by, order = sort_listings(
+        filtered_item_listings, sort_by, order, DEFAULT_ORDERS
     )
     data_rows = build_rows(sorted_item_listings, max_ranks, copy)
     column_widths = determine_widths(data_rows, sort_by)

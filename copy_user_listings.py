@@ -4,8 +4,17 @@ from utils import (
     build_id_to_name_mapping,
     extract_user_listings,
     get_all_items,
-    sort_user_listings,
+    sort_listings,
 )
+
+DEFAULT_ORDERS = {
+    "item": "asc",
+    "price": "desc",
+    "rank": "desc",
+    "quantity": "desc",
+    "created": "desc",
+    "updated": "desc",
+}
 
 
 def get_base_name(item_name):
@@ -98,12 +107,14 @@ def copy_to_clipboard(chunks):
             print(f"Chunk {i}/{len(chunks)} copied ({len(chunk)} chars).")
 
 
-def copy_user_listings(user="bhwsg"):
+def copy_user_listings(user="bhwsg", sort_by="updated", order=None):
     """Main entry point."""
     all_items = get_all_items()
     id_to_name = build_id_to_name_mapping(all_items)
     user_listings = extract_user_listings(user, id_to_name)
-    sorted_user_listings, _, _ = sort_user_listings(user_listings)
+    sorted_user_listings, _, _ = sort_listings(
+        user_listings, sort_by, order, DEFAULT_ORDERS
+    )
     expanded_listings = expand_item_sets(sorted_user_listings, all_items)
     links = convert_listings_to_links(expanded_listings)
     link_chunks = chunk_links(links)

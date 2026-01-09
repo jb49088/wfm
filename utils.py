@@ -44,18 +44,8 @@ def extract_user_listings(user, id_to_name):
     return user_listings
 
 
-def sort_user_listings(listings, sort_by, order):
-    """Sort listings with sane defaults."""
-    default_orders = {
-        "item": "asc",
-        "price": "desc",
-        "rank": "desc",
-        "quantity": "desc",
-        "created": "desc",
-        "updated": "desc",
-    }
-
-    # Use default order if none provided
+def sort_listings(listings, sort_by, order, default_orders):
+    """Sort listings."""
     if order is None:
         order = default_orders[sort_by]
 

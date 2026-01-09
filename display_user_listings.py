@@ -7,9 +7,17 @@ from utils import (
     display_listings,
     extract_user_listings,
     get_all_items,
-    sort_user_listings,
+    sort_listings,
 )
 
+DEFAULT_ORDERS = {
+    "item": "asc",
+    "price": "desc",
+    "rank": "desc",
+    "quantity": "desc",
+    "created": "desc",
+    "updated": "desc",
+}
 RIGHT_ALLIGNED_COLUMNS = ("price", "rank", "quantity")
 
 
@@ -61,8 +69,8 @@ def display_user_listings(user="bhwsg", sort_by="updated", order=None, copy=Fals
     id_to_name = build_id_to_name_mapping(all_items)
     max_ranks = build_name_to_max_rank_mapping(all_items, id_to_name)
     user_listings = extract_user_listings(user, id_to_name)
-    sorted_user_listings, sort_by, order = sort_user_listings(
-        user_listings, sort_by, order
+    sorted_user_listings, sort_by, order = sort_listings(
+        user_listings, sort_by, order, DEFAULT_ORDERS
     )
     data_rows = build_rows(sorted_user_listings, max_ranks, copy)
     column_widths = determine_widths(data_rows, sort_by)
