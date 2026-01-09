@@ -63,7 +63,7 @@ def sort_listings(listings, sort_by, order, default_orders):
         )
     )
 
-    return sorted_listings
+    return (sorted_listings, sort_by, order)
 
 
 def determine_widths(data_rows, sort_by):
