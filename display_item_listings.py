@@ -1,3 +1,4 @@
+import pyperclip
 import requests
 
 from utils import (
@@ -12,9 +13,9 @@ STATUS_MAPPING = {"offline": "Offline", "online": "Online", "ingame": "In Game"}
 RIGHT_ALLIGNED_COLUMNS = ("price", "rank", "quantity", "reputation")
 
 
-def extract_item_listings(id_to_name):
+def extract_item_listings(item, id_to_name):
     """Extract and process listings for a specific item."""
-    r = requests.get("https://api.warframe.market/v2/orders/item/lohk")
+    r = requests.get(f"https://api.warframe.market/v2/orders/item/{item.lower()}")
     r.raise_for_status()
 
     item_listings = []
@@ -93,15 +94,41 @@ def build_rows(listings, max_ranks, copy=True):
     return data_rows
 
 
+def copy_listing(data_rows):
+    listing = input("Listing to copy: ").strip()
+
+    for row in data_rows:
+        if row["#"] == listing:
+            segments = [
+                "WTB",
+                f"{row['item']}",
+                f"Rank: {row['rank']}" if row.get("rank") else "",
+                f"Price: {row['price']}",
+            ]
+            segments = [s for s in segments if s]
+            message = f"/w {row['seller']} {' | '.join(segments)}"
+            pyperclip.copy(message)
+            print(f"Copied to clipboard: {message}")
+            return
+
+    print(f"Listing {listing} not found")
+
+
 def display_item_listings():
+    args = {
+        "item": "Lohk",
+        "copy": True,
+    }
     all_items = get_all_items()
     id_to_name = build_id_to_name_mapping(all_items)
     max_ranks = build_name_to_max_rank_mapping(all_items, id_to_name)
-    item_listings = extract_item_listings(id_to_name)
+    item_listings = extract_item_listings(args["item"], id_to_name)
     sorted_item_listings, sort_by, order = sort_item_listings(item_listings)
     data_rows = build_rows(sorted_item_listings, max_ranks)
     column_widths = determine_widths(data_rows, sort_by)
     display_listings(data_rows, column_widths, RIGHT_ALLIGNED_COLUMNS, sort_by, order)
+    if args["copy"]:
+        copy_listing(data_rows)
 
 
 if __name__ == "__main__":

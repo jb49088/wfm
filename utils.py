@@ -1,3 +1,4 @@
+import pyperclip
 import requests
 
 ARROW_MAPPING = {"desc": "↓", "asc": "↑"}
@@ -19,29 +20,6 @@ def build_id_to_name_mapping(all_items):
 def build_name_to_max_rank_mapping(all_items, id_to_name):
     """Build a mapping from item name to max rank."""
     return {id_to_name[item["id"]]: item.get("maxRank") for item in all_items}
-
-
-def extract_user_listings(user, id_to_name):
-    """Extract and process listings for a specific user."""
-    r = requests.get(f"https://api.warframe.market/v2/orders/user/{user.lower()}")
-    r.raise_for_status()
-
-    user_listings = []
-
-    for listing in r.json()["data"]:
-        if listing["type"] == "sell":
-            user_listings.append(
-                {
-                    "item": id_to_name[listing.get("itemId", "")],
-                    "itemId": listing.get("itemId", ""),
-                    "price": listing.get("platinum", 0),
-                    "rank": listing.get("rank"),
-                    "quantity": listing.get("quantity", 1),
-                    "updated": listing.get("updatedAt", ""),
-                }
-            )
-
-    return user_listings
 
 
 def determine_widths(data_rows, sort_by):
@@ -89,3 +67,23 @@ def display_listings(data_rows, column_widths, right_alligned_columns, sort_by, 
         print(f"|{'|'.join(data_row)}|")
 
     print(f"+{'+'.join(separator_row)}+")
+
+
+def copy_listing(user, data_rows):
+    listing = input("Listing to copy: ").strip()
+
+    for row in data_rows:
+        if row["#"] == listing:
+            segments = [
+                "WTB",
+                f"{row['item']}",
+                f"Rank: {row['rank']}" if row.get("rank") else "",
+                f"Price: {row['price']}",
+            ]
+            segments = [s for s in segments if s]
+            message = f"/w {user} {' | '.join(segments)}"
+            pyperclip.copy(message)
+            print(f"Copied to clipboard: {message}")
+            return
+
+    print(f"Listing {listing} not found")

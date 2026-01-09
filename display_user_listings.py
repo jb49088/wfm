@@ -63,7 +63,7 @@ def sort_user_listings(listings, sort_by="updated", order=None):
     return (sorted_listings, sort_by, default_orders[sort_by] if not order else order)
 
 
-def build_rows(listings, max_ranks, copy=True):
+def build_rows(listings, max_ranks, copy=False):
     """Build rows for table rendering."""
     data_rows = []
     for i, listing in enumerate(listings, start=1):
