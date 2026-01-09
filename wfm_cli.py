@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     item_parser = subparsers.add_parser("item", help="Display item listings")
     item_parser.add_argument("item", help="Name of the item")
-    item_parser.add_argument("--sort", default="updated", help="Field to sort by")
+    item_parser.add_argument("--sort", default="price", help="Field to sort by")
     item_parser.add_argument("--order", default=None, help="Sort order")
     item_parser.add_argument(
         "--no-in-game",
