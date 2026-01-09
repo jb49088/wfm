@@ -63,21 +63,17 @@ def copy_listing(user, data_rows):
     print(f"Listing {listing} not found")
 
 
-def display_user_listings(user="bhwsg", sort_by="updated", order=None, copy=False):
+def display_user_listings(args):
     """Main entry point."""
     all_items = get_all_items()
     id_to_name = build_id_to_name_mapping(all_items)
     max_ranks = build_name_to_max_rank_mapping(all_items, id_to_name)
-    user_listings = extract_user_listings(user, id_to_name)
-    sorted_user_listings, sort_by, order = sort_listings(
-        user_listings, sort_by, order, DEFAULT_ORDERS
+    user_listings = extract_user_listings(args.user, id_to_name)
+    sorted_user_listings, sort, order = sort_listings(
+        user_listings, args.sort, args.order, DEFAULT_ORDERS
     )
-    data_rows = build_rows(sorted_user_listings, max_ranks, copy)
-    column_widths = determine_widths(data_rows, sort_by)
-    display_listings(data_rows, column_widths, RIGHT_ALLIGNED_COLUMNS, sort_by, order)
-    if copy:
-        copy_listing(user, data_rows)
-
-
-if __name__ == "__main__":
-    display_user_listings()
+    data_rows = build_rows(sorted_user_listings, max_ranks, args.copy)
+    column_widths = determine_widths(data_rows, sort)
+    display_listings(data_rows, column_widths, RIGHT_ALLIGNED_COLUMNS, sort, order)
+    if args.copy:
+        copy_listing(args.user, data_rows)

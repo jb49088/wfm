@@ -51,9 +51,9 @@ def extract_item_listings(item, id_to_name):
     return item_listings
 
 
-def filter_item_listings(item_listings, ingame_only):
+def filter_item_listings(item_listings, in_game):
     """Filter out listings for sellers that are not in game."""
-    if ingame_only:
+    if in_game:
         item_listings = [
             listing for listing in item_listings if listing["status"] == "ingame"
         ]
@@ -105,24 +105,18 @@ def copy_listing(data_rows):
     print(f"Listing {listing} not found")
 
 
-def display_item_listings(
-    item="Lohk", sort_by="price", order=None, ingame_only=True, copy=True
-):
+def display_item_listings(args):
     """Main entry point."""
     all_items = get_all_items()
     id_to_name = build_id_to_name_mapping(all_items)
     max_ranks = build_name_to_max_rank_mapping(all_items, id_to_name)
-    item_listings = extract_item_listings(item, id_to_name)
-    filtered_item_listings = filter_item_listings(item_listings, ingame_only)
-    sorted_item_listings, sort_by, order = sort_listings(
-        filtered_item_listings, sort_by, order, DEFAULT_ORDERS
+    item_listings = extract_item_listings(args.item, id_to_name)
+    filtered_item_listings = filter_item_listings(item_listings, args.in_game)
+    sorted_item_listings, sort, order = sort_listings(
+        filtered_item_listings, args.sort, args.order, DEFAULT_ORDERS
     )
-    data_rows = build_rows(sorted_item_listings, max_ranks, copy)
-    column_widths = determine_widths(data_rows, sort_by)
-    display_listings(data_rows, column_widths, RIGHT_ALLIGNED_COLUMNS, sort_by, order)
-    if copy:
+    data_rows = build_rows(sorted_item_listings, max_ranks, args.copy)
+    column_widths = determine_widths(data_rows, sort)
+    display_listings(data_rows, column_widths, RIGHT_ALLIGNED_COLUMNS, sort, order)
+    if args.copy:
         copy_listing(data_rows)
-
-
-if __name__ == "__main__":
-    display_item_listings()

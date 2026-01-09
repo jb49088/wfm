@@ -107,19 +107,15 @@ def copy_to_clipboard(chunks):
             print(f"Chunk {i}/{len(chunks)} copied ({len(chunk)} chars).")
 
 
-def copy_user_listings(user="bhwsg", sort_by="updated", order=None):
+def copy_user_listings(args):
     """Main entry point."""
     all_items = get_all_items()
     id_to_name = build_id_to_name_mapping(all_items)
-    user_listings = extract_user_listings(user, id_to_name)
+    user_listings = extract_user_listings(args.user, id_to_name)
     sorted_user_listings, _, _ = sort_listings(
-        user_listings, sort_by, order, DEFAULT_ORDERS
+        user_listings, args.sort, args.order, DEFAULT_ORDERS
     )
     expanded_listings = expand_item_sets(sorted_user_listings, all_items)
     links = convert_listings_to_links(expanded_listings)
     link_chunks = chunk_links(links)
     copy_to_clipboard(link_chunks)
-
-
-if __name__ == "__main__":
-    copy_user_listings()
