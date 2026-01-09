@@ -88,7 +88,7 @@ def determine_widths(data_rows, sort_by):
     return column_widths
 
 
-def display_listings(data_rows, column_widths, sort_by, order):
+def display_listings(data_rows, column_widths, right_alligned_columns, sort_by, order):
     """Display listings in a sql-like table."""
     separator_row = ["-" * width for width in column_widths.values()]
 
@@ -108,7 +108,7 @@ def display_listings(data_rows, column_widths, sort_by, order):
     for row in data_rows:
         data_row = []
         for key, value in row.items():
-            if key in ("price", "rank", "quantity"):
+            if key in right_alligned_columns:
                 formatted = f"{value} ".rjust(column_widths[key])
             else:
                 formatted = f" {value}".ljust(column_widths[key])

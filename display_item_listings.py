@@ -8,6 +8,8 @@ from utils import (
     get_all_items,
 )
 
+RIGHT_ALLIGNED_COLUMNS = ("price", "rank", "quantity", "reputation")
+
 
 def extract_item_listings(id_to_name):
     """Extract and process listings for a specific item."""
@@ -66,7 +68,7 @@ def display_item_listings():
     item_listings = extract_item_listings(id_to_name)
     data_rows = build_rows(item_listings, max_ranks)
     column_widths = determine_widths(data_rows, "item")
-    display_listings(data_rows, column_widths, "item", "asc")
+    display_listings(data_rows, column_widths, RIGHT_ALLIGNED_COLUMNS, "item", "asc")
 
 
 if __name__ == "__main__":

@@ -10,6 +10,8 @@ from utils import (
     sort_user_listings,
 )
 
+RIGHT_ALLIGNED_COLUMNS = ("price", "rank", "quantity")
+
 
 def build_rows(listings, max_ranks, copy=True):
     """Build rows for table rendering."""
@@ -65,7 +67,7 @@ def display_user_listings():
     sorted_user_listings, sort_by, order = sort_user_listings(user_listings)
     data_rows = build_rows(sorted_user_listings, max_ranks, args["copy"])
     column_widths = determine_widths(data_rows, sort_by)
-    display_listings(data_rows, column_widths, sort_by, order)
+    display_listings(data_rows, column_widths, RIGHT_ALLIGNED_COLUMNS, sort_by, order)
     if args["copy"]:
         copy_listing(args["user"], data_rows)
 
