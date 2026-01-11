@@ -44,6 +44,20 @@ def extract_user_listings(user, id_to_name):
     return user_listings
 
 
+def filter_listings(item_listings, rank, in_game):
+    """Filter listings."""
+    if rank is not None:
+        item_listings = [
+            listing for listing in item_listings if listing.get("rank") == rank
+        ]
+    if in_game:
+        item_listings = [
+            listing for listing in item_listings if listing.get("status") == "ingame"
+        ]
+
+    return item_listings
+
+
 def sort_listings(listings, sort_by, order, default_orders):
     """Sort listings."""
     if order is None:

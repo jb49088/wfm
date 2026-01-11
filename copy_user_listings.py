@@ -3,6 +3,7 @@ import pyperclip
 from utils import (
     build_id_to_name_mapping,
     extract_user_listings,
+    filter_listings,
     get_all_items,
     sort_listings,
 )
@@ -112,8 +113,9 @@ def copy_user_listings(args):
     all_items = get_all_items()
     id_to_name = build_id_to_name_mapping(all_items)
     user_listings = extract_user_listings(args.user, id_to_name)
+    filtered_user_listings = filter_listings(user_listings, args.rank, in_game=False)
     sorted_user_listings, _, _ = sort_listings(
-        user_listings, args.sort, args.order, DEFAULT_ORDERS
+        filtered_user_listings, args.sort, args.order, DEFAULT_ORDERS
     )
     expanded_listings = expand_item_sets(sorted_user_listings, all_items)
     links = convert_listings_to_links(expanded_listings)

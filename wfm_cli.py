@@ -2,10 +2,8 @@
 # =                                   WFM_CLI                                    =
 # ================================================================================
 
-# TODO: Reverse engineer username normalization for api url
 # TODO: Reverse engineer item names normalization for api url
 # TODO: Add secondary sort by updated to break price ties
-# TODO: Add error handling when a user has 0 listings
 # TODO: Deal with ayatan sculpture ranking
 # TODO: Add ranking API query
 
@@ -23,6 +21,7 @@ if __name__ == "__main__":
     item_parser.add_argument("item", help="Name of the item")
     item_parser.add_argument("--sort", default="price", help="Field to sort by")
     item_parser.add_argument("--order", default=None, help="Sort order")
+    item_parser.add_argument("--rank", type=int, default=None, help="Rank to filter by")
     item_parser.add_argument(
         "--no-in-game",
         action="store_false",
@@ -41,6 +40,7 @@ if __name__ == "__main__":
     user_parser.add_argument("user", help="In game username")
     user_parser.add_argument("--sort", default="updated", help="Field to sort by")
     user_parser.add_argument("--order", default=None, help="Sort order")
+    user_parser.add_argument("--rank", type=int, default=None, help="Rank to filter by")
     user_parser.add_argument(
         "--copy",
         action="store_true",
@@ -52,6 +52,7 @@ if __name__ == "__main__":
     copy_parser.add_argument("user", help="In game username")
     copy_parser.add_argument("--sort", default="updated", help="Field to sort by")
     copy_parser.add_argument("--order", default=None, help="Sort order")
+    copy_parser.add_argument("--rank", type=int, default=None, help="Rank to filter by")
 
     copy_parser.set_defaults(func=copy_user_listings)
 
