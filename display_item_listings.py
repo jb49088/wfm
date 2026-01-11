@@ -40,19 +40,19 @@ def extract_item_listings(item, id_to_name):
 
     for listing in r.json()["data"]:
         if listing["type"] == "sell":
-            listing_dict = {
-                "seller": listing.get("user", {}).get("ingameName", "Unknown"),
-                "reputation": listing.get("user", {}).get("reputation", 0),
-                "status": listing.get("user", {}).get("status", "offline"),
-                "item": id_to_name[listing.get("itemId", "")],
-                "itemId": listing.get("itemId", ""),
-                "rank": listing.get("rank"),
-                "price": listing.get("platinum", 0),
-                "quantity": listing.get("quantity", 1),
-                "updated": listing.get("updatedAt", ""),
-            }
-
-            item_listings.append(listing_dict)
+            item_listings.append(
+                {
+                    "seller": listing.get("user", {}).get("ingameName", "Unknown"),
+                    "reputation": listing.get("user", {}).get("reputation", 0),
+                    "status": listing.get("user", {}).get("status", "offline"),
+                    "item": id_to_name[listing.get("itemId", "")],
+                    "itemId": listing.get("itemId", ""),
+                    "rank": listing.get("rank"),
+                    "price": listing.get("platinum", 0),
+                    "quantity": listing.get("quantity", 1),
+                    "updated": listing.get("updatedAt", ""),
+                }
+            )
 
     return item_listings
 
