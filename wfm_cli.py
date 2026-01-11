@@ -3,7 +3,6 @@
 # ================================================================================
 
 # TODO: Reverse engineer item names normalization for api url
-# TODO: Add secondary sort by updated to break price ties
 # TODO: Deal with ayatan sculpture ranking
 
 import argparse

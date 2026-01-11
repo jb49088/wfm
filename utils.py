@@ -65,16 +65,18 @@ def sort_listings(listings, sort_by, order, default_orders):
 
     is_desc = order == "desc"
 
-    sorted_listings = list(
-        sorted(
-            listings,
-            key=lambda listing: listing[sort_by]
-            if listing[sort_by] is not None
-            else float("-inf")
-            if is_desc
-            else float("inf"),
-            reverse=is_desc,
-        )
+    sorted_listings = sorted(
+        listings, key=lambda listing: listing["updated"], reverse=True
+    )
+
+    sorted_listings = sorted(
+        sorted_listings,
+        key=lambda listing: listing[sort_by]
+        if listing[sort_by] is not None
+        else float("-inf")
+        if is_desc
+        else float("inf"),
+        reverse=is_desc,
     )
 
     return (sorted_listings, sort_by, order)
