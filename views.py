@@ -5,17 +5,26 @@ MENU_OPTIONS = [
     "Show my listings",
     "Sync my listings",
     "Change my status",
-    "Authenticate",
     "Profile",
-    "Log out",
     "Quit",
 ]
 
 
 def menu():
     clear_screen()
-    print("wfm_cli")
+
+    left = "wfm_cli"
+    right = "In-Game"
+
+    # Determine menu width
+    menu_width = max(len(option) for option in MENU_OPTIONS + [left, right]) + 3
+
+    # Align header
+    spacing = menu_width - len(left) - len(right)
+    print(f"{left}{' ' * spacing}{right}")
     print()
+
+    # Menu options
     for i, option in enumerate(MENU_OPTIONS, 1):
         print(f"{i}. {option}")
     print()
