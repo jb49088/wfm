@@ -8,24 +8,16 @@ from copy_user_listings import copy_user_listings
 from display_item_listings import display_item_listings
 from display_user_listings import display_user_listings
 from menu import menu
-from utils import clear_screen
-
-
-def enter_alt_screen():
-    sys.stdout.write("\033[?1049h")
-    sys.stdout.flush()
-
-
-def exit_alt_screen():
-    sys.stdout.write("\033[?1049l")
-    sys.stdout.flush()
+from utils import clear_screen, display_navbar, enter_alt_screen, exit_alt_screen
 
 
 def wfm_cli():
     menu()
-    option = input("Option > ")
+    option = input("> ")
     if option == "1":
-        item = input("Item > ")
+        clear_screen()
+        display_navbar(["wfm_cli", "Search for item"])
+        item = input("> ")
         display_item_listings(item)
     elif option == "2":
         pass
