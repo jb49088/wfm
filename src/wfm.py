@@ -1,5 +1,5 @@
 # ================================================================================
-# =                                   WFM_CLI                                    =
+# =                                     WFM                                      =
 # ================================================================================
 
 # TODO: cache full item list on start to reduce requests
@@ -41,13 +41,13 @@ def handle_search(args):
     display_item_listings(item=item, **kwargs)
 
 
-def wfm_cli():
-    """Main entry point for wfm_cli."""
+def wfm():
+    """Main entry point for wfm."""
     session = PromptSession(history=FileHistory("data/history"))
     status = "\033[32mIn Game\033[0m"
     while True:
         try:
-            cmd = session.prompt(ANSI(f"wfm_cli [{status}]> ")).strip()
+            cmd = session.prompt(ANSI(f"wfm [{status}]> ")).strip()
         except KeyboardInterrupt:
             break
 
@@ -64,6 +64,6 @@ def wfm_cli():
 
 if __name__ == "__main__":
     try:
-        wfm_cli()
+        wfm()
     except KeyboardInterrupt:
         pass
