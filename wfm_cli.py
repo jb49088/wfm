@@ -4,7 +4,7 @@
 
 import shlex
 
-from prompt_toolkit import prompt
+from prompt_toolkit import ANSI, prompt
 
 from copy_user_listings import copy_user_listings
 from display_item_listings import display_item_listings
@@ -13,9 +13,10 @@ from utils import clear_screen
 
 
 def wfm_cli():
+    status = "\033[32mIn Game\033[0m"
     while True:
         try:
-            cmd = prompt("wfm_cli> ").strip()
+            cmd = prompt(ANSI(f"wfm_cli [{status}]> ")).strip()
         except KeyboardInterrupt:
             break
 
