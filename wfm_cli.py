@@ -2,6 +2,8 @@
 # =                                   WFM_CLI                                    =
 # ================================================================================
 
+import shlex
+
 from copy_user_listings import copy_user_listings
 from display_item_listings import display_item_listings
 from display_user_listings import display_user_listings
@@ -15,12 +17,30 @@ def wfm_cli():
         except KeyboardInterrupt:
             break
 
-        parts = cmd.split()
+        parts = shlex.split(cmd)
         action = parts[0].lower()
         args = parts[1:]
 
         if action == "search":
             item = args[0]
+
+            kwargs = {
+                "sort": "price",
+                "order": None,
+                "rank": None,
+                "status": "ingame",
+            }
+
+            rest = args[1:]
+            pairs = zip(rest[::2], rest[1::2])
+
+            for key, value in pairs:
+                kwargs[key] = value
+
+            if kwargs["rank"]:
+                kwargs["rank"] = int(kwargs["rank"])
+
+            display_item_listings(item=item, **kwargs)
 
         elif action == "clear":
             clear_screen()

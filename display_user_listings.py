@@ -71,7 +71,7 @@ def display_user_listings(user, rank=None, sort="updated", order=None):
     id_to_name = build_id_to_name_mapping(all_items)
     max_ranks = build_name_to_max_rank_mapping(all_items, id_to_name)
     user_listings = extract_user_listings(user, id_to_name)
-    filtered_item_listings = filter_listings(user_listings, rank, in_game=False)
+    filtered_item_listings = filter_listings(user_listings, rank, status="all")
     sorted_user_listings, sort, order = sort_listings(
         filtered_item_listings, sort, order, DEFAULT_ORDERS
     )

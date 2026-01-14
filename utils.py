@@ -67,15 +67,15 @@ def extract_user_listings(user, id_to_name):
     return user_listings
 
 
-def filter_listings(item_listings, rank, in_game):
+def filter_listings(item_listings, rank, status):
     """Filter listings."""
     if rank is not None:
         item_listings = [
             listing for listing in item_listings if listing.get("rank") == rank
         ]
-    if in_game:
+    if status != "all":
         item_listings = [
-            listing for listing in item_listings if listing.get("status") == "ingame"
+            listing for listing in item_listings if listing.get("status") == status
         ]
 
     return item_listings
