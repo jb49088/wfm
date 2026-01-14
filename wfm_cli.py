@@ -4,8 +4,6 @@
 
 import sys
 
-from views import menu, profile
-
 from copy_user_listings import copy_user_listings
 from display_item_listings import display_item_listings
 from display_user_listings import display_user_listings
@@ -22,6 +20,7 @@ def exit_alt_screen():
 
 
 def wfm_cli():
+    print("wfm_cli")
     while True:
         pass
 
