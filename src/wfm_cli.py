@@ -2,6 +2,11 @@
 # =                                   WFM_CLI                                    =
 # ================================================================================
 
+# TODO: cache full item list on start to reduce requests
+# TODO: implement status changing
+# TODO: implement my listings
+# TODO: finish basic argument parsing functionality
+
 import shlex
 
 from prompt_toolkit import ANSI, PromptSession
