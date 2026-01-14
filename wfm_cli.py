@@ -8,9 +8,16 @@ from display_user_listings import display_user_listings
 
 
 def wfm_cli():
-    print("wfm_cli")
     while True:
-        pass
+        try:
+            cmd = input("wfm_cli> ").strip()
+        except KeyboardInterrupt:
+            break
+
+        parts = cmd.split(maxsplit=1)
+
+        if parts[0] == "search":
+            display_item_listings(parts[1])
 
 
 if __name__ == "__main__":
