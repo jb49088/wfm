@@ -24,6 +24,7 @@ HISTORY_FILE = APP_DIR / "history"
 
 
 def ensure_app_dir():
+    """Make sure the application data directory exists."""
     APP_DIR.mkdir(exist_ok=True)
 
 
