@@ -1,5 +1,3 @@
-import os
-
 import requests
 
 from config import BROWSER_HEADERS
@@ -20,7 +18,7 @@ ARROW_MAPPING = {"desc": "↓", "asc": "↑"}
 
 
 def clear_screen():
-    os.system("cls" if os.name == "nt" else "clear")
+    print("\033[2J\033[H", end="")
 
 
 def get_all_items():
