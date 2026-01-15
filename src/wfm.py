@@ -14,6 +14,7 @@ from pathlib import Path
 from prompt_toolkit import ANSI, PromptSession
 from prompt_toolkit.history import FileHistory
 
+from config import AUTHENTICATED_HEADERS
 from copy_user_listings import copy_user_listings
 from display_item_listings import display_item_listings
 from display_user_listings import display_user_listings
@@ -51,6 +52,14 @@ def load_cookies():
         return json.load(f)
 
 
+def build_authenticated_headers(cookies):
+    """Build authenticated headers with cookies."""
+    headers = AUTHENTICATED_HEADERS.copy()
+    headers["Cookie"] = f"JWT={cookies['jwt']}; cf_clearance={cookies['cf']}"
+
+    return headers
+
+
 def handle_search(args):
     """Parse and display an items listings."""
     item = args[0]
@@ -83,6 +92,8 @@ def wfm():
         ensure_cookies_file(cookies)
 
     cookies = load_cookies()
+
+    authenticated_headers = build_authenticated_headers(cookies)
 
     session = PromptSession(history=FileHistory(HISTORY_FILE))
 
