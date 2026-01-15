@@ -148,11 +148,38 @@ def handle_profile(user_info):
         "switch": "Nintendo Switch",
         "mobile": "Mobile",
     }
-
+    print()
     print(f"Username: {user_info['ingameName']}")
     print(f"Reputation: {user_info['reputation']}")
     print(f"Platform: {platform_mapping[user_info['platform']]}")
     print(f"Crossplay: {'Enabled' if user_info['crossplay'] else 'Disabled'}")
+    print()
+
+
+def handle_help():
+    """Display all commands and example usage."""
+    print()
+    print("Available commands:")
+    print(
+        "  search <item> [sort <field>] [order <asc|desc>] [rank <number>] [status <all|ingame|online|offline>]"
+    )
+    print("      Search for item listings (all filters optional)")
+    print('      Example: search "ammo drum"')
+    print('      Example: search "ammo drum" rank 5 sort reputation')
+    print("      Example: search serration rank 0 status ingame")
+    print()
+    print("  listings [sort <field>] [order <asc|desc>] [rank <number>]")
+    print("      Display your active listings (all filters optional)")
+    print("      Example: listings")
+    print("      Example: listings sort price")
+    print("      Example: listings rank 0 sort updated order desc")
+    print()
+    print("  profile")
+    print("      Display your account information")
+    print()
+    print("  help")
+    print("      Show this help message")
+    print()
 
 
 def wfm():
@@ -196,12 +223,15 @@ def wfm():
         elif action == "profile":
             handle_profile(user_info)
 
+        elif action == "help":
+            handle_help()
+
         elif action == "clear":
             clear_screen()
 
+        else:
+            print(f"Unknown command: '{action}'. Use 'help' to see available commands.")
+
 
 if __name__ == "__main__":
-    try:
-        wfm()
-    except KeyboardInterrupt:
-        pass
+    wfm()

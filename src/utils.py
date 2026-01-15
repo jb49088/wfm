@@ -116,6 +116,7 @@ def display_listings(data_rows, column_widths, right_alligned_columns, sort_by, 
         for key, width in column_widths.items()
     ]
 
+    print()
     print(f"+{'+'.join(separator_row)}+")
     print(f"|{'|'.join(header_row)}|")
     print(f"+{'+'.join(separator_row)}+")
@@ -135,3 +136,4 @@ def display_listings(data_rows, column_widths, right_alligned_columns, sort_by, 
         print(f"|{'|'.join(data_row)}|")
 
     print(f"+{'+'.join(separator_row)}+")
+    print()
