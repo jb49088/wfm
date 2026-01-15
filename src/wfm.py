@@ -2,10 +2,8 @@
 # =                                     WFM                                      =
 # ================================================================================
 
-# TODO: cache full item list on start to reduce requests
 # TODO: implement status changing
-# TODO: implement my listings
-# TODO: finish basic argument parsing functionality
+# TODO: implement copying, deleting, going to sellers listings
 
 import json
 import shlex
