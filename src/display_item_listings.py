@@ -1,7 +1,7 @@
 import pyperclip
 import requests
 
-from config import PUBLIC_HEADERS
+from config import BROWSER_HEADERS
 from utils import (
     build_id_to_name_mapping,
     build_name_to_max_rank_mapping,
@@ -35,7 +35,8 @@ def slugify_item_name(item):
 def extract_item_listings(item, id_to_name):
     """Extract and process listings for a specific item."""
     r = requests.get(
-        url=f"https://api.warframe.market/v2/orders/item/{item}", headers=PUBLIC_HEADERS
+        url=f"https://api.warframe.market/v2/orders/item/{item}",
+        headers=BROWSER_HEADERS,
     )
     r.raise_for_status()
 
