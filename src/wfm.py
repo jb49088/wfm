@@ -139,7 +139,7 @@ def handle_listings(args):
     return kwargs
 
 
-def handle_profile(user_info):
+def display_profile(user_info):
     """Display basic profile info for the authenticated user."""
     platform_mapping = {
         "pc": "PC",
@@ -156,7 +156,7 @@ def handle_profile(user_info):
     print()
 
 
-def handle_help():
+def display_help():
     """Display all commands and example usage."""
     print()
     print("Available commands:")
@@ -221,10 +221,10 @@ def wfm():
             display_user_listings(id_to_name, max_ranks, user_info["slug"], **kwargs)
 
         elif action == "profile":
-            handle_profile(user_info)
+            display_profile(user_info)
 
         elif action == "help":
-            handle_help()
+            display_help()
 
         elif action == "clear":
             clear_screen()
