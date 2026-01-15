@@ -7,6 +7,7 @@
 # TODO: implement my listings
 # TODO: finish basic argument parsing functionality
 
+import json
 import shlex
 from pathlib import Path
 
@@ -19,13 +20,28 @@ from display_user_listings import display_user_listings
 from utils import clear_screen
 
 APP_DIR = Path.home() / ".wfm"
-CONFIG_FILE = APP_DIR / "config.json"
+COOKIES_FILE = APP_DIR / "cookies.json"
 HISTORY_FILE = APP_DIR / "history"
 
 
 def ensure_app_dir():
     """Make sure the application data directory exists."""
     APP_DIR.mkdir(exist_ok=True)
+
+
+def get_cookies():
+    """Prompt user for JWT token and CF clearance."""
+    cookies = {
+        "jwt": input("Enter your JWT token: "),
+        "cf": input("Enter your CF clearance: "),
+    }
+
+    return cookies
+
+
+def ensure_cookies_file(cookies):
+    """Make sure the config file exists."""
+    COOKIES_FILE.write_text(json.dumps(cookies, indent=2))
 
 
 def handle_search(args):
@@ -54,8 +70,15 @@ def handle_search(args):
 def wfm():
     """Main entry point for wfm."""
     ensure_app_dir()
+
+    if not COOKIES_FILE.exists():
+        cookies = get_cookies()
+        ensure_cookies_file(cookies)
+
     session = PromptSession(history=FileHistory(HISTORY_FILE))
+
     status = "\033[32mIn Game\033[0m"
+
     while True:
         try:
             cmd = session.prompt(ANSI(f"wfm [{status}]> ")).strip()
