@@ -88,7 +88,7 @@ def get_user_info(headers):
 
 
 def handle_search(args):
-    """Parse and display an items listings."""
+    """Parse arguments and display an items listings."""
     item = args[0]
 
     kwargs = {
@@ -111,6 +111,7 @@ def handle_search(args):
 
 
 def handle_listings(args, user_info):
+    """Parse arguments and display the authenticated users listings."""
     kwargs = {
         "sort": "price",
         "order": None,
@@ -126,6 +127,22 @@ def handle_listings(args, user_info):
         kwargs["rank"] = int(kwargs["rank"])
 
     display_user_listings(user=user_info["slug"], **kwargs)
+
+
+def handle_profile(user_info):
+    """Display basic profile info for the authenticated user."""
+    platform_mapping = {
+        "pc": "PC",
+        "ps4": "PS4",
+        "xbox": "Xbox",
+        "switch": "Nintendo Switch",
+        "mobile": "Mobile",
+    }
+
+    print(f"{user_info['ingameName']}")
+    print(f"Reputation: {user_info['reputation']}")
+    print(f"Platform: {platform_mapping[user_info['platform']]}")
+    print(f"Crossplay: {'Enabled' if user_info['crossplay'] else 'Disabled'}")
 
 
 def wfm():
@@ -161,6 +178,9 @@ def wfm():
 
         elif action == "listings":
             handle_listings(args, user_info)
+
+        elif action == "profile":
+            handle_profile(user_info)
 
         elif action == "clear":
             clear_screen()
