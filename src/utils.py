@@ -11,6 +11,7 @@ COLUMNS = [
     "price",
     "rank",
     "quantity",
+    "visibility",
     "updated",
 ]
 
@@ -40,6 +41,7 @@ def extract_user_listings(user, id_to_name):
                     "price": listing.get("platinum", 0),
                     "rank": listing.get("rank"),
                     "quantity": listing.get("quantity", 1),
+                    "visible": listing.get("visible", False),
                     "updated": listing.get("updatedAt", ""),
                 }
             )
@@ -47,18 +49,14 @@ def extract_user_listings(user, id_to_name):
     return user_listings
 
 
-def filter_listings(item_listings, rank, status):
+def filter_listings(listings, rank, status):
     """Filter listings."""
     if rank is not None:
-        item_listings = [
-            listing for listing in item_listings if listing.get("rank") == rank
-        ]
+        listings = [listing for listing in listings if listing.get("rank") == rank]
     if status != "all":
-        item_listings = [
-            listing for listing in item_listings if listing.get("status") == status
-        ]
+        listings = [listing for listing in listings if listing.get("status") == status]
 
-    return item_listings
+    return listings
 
 
 def sort_listings(listings, sort_by, order, default_orders):
@@ -72,13 +70,18 @@ def sort_listings(listings, sort_by, order, default_orders):
         listings, key=lambda listing: listing["updated"], reverse=True
     )
 
+    def get_sort_key(listing):
+        if listing[sort_by] is None:
+            return float("-inf") if is_desc else float("inf")
+
+        if sort_by == "visibility":
+            return "visible" if listing["visible"] else "hidden"
+
+        return listing[sort_by]
+
     sorted_listings = sorted(
         sorted_listings,
-        key=lambda listing: listing[sort_by]
-        if listing[sort_by] is not None
-        else float("-inf")
-        if is_desc
-        else float("inf"),
+        key=get_sort_key,
         reverse=is_desc,
     )
 

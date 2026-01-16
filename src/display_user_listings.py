@@ -14,6 +14,7 @@ DEFAULT_ORDERS = {
     "rank": "desc",
     "quantity": "desc",
     "created": "desc",
+    "visibility": "desc",
     "updated": "desc",
 }
 
@@ -30,6 +31,7 @@ def build_rows(listings, max_ranks):
             "item": listing["item"],
             "price": f"{listing['price']}p",
             "quantity": str(listing["quantity"]),
+            "visibility": "Visible" if listing["visible"] else "Hidden",
             "updated": str(listing["updated"]),
         }
 
