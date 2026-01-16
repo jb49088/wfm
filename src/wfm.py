@@ -24,7 +24,7 @@ COOKIES_FILE = APP_DIR / "cookies.json"
 HISTORY_FILE = APP_DIR / "history"
 
 
-def ensure_app_dir():
+def ensure_app_dir() -> None:
     """Make sure the application data directory exists."""
     APP_DIR.mkdir(exist_ok=True)
 
@@ -93,6 +93,14 @@ def get_all_items():
     r.raise_for_status()
 
     return r.json()["data"]
+
+
+def build_id_to_name_mapping(all_items):
+    return {item["id"]: item["i18n"]["en"]["name"] for item in all_items}
+
+
+def build_name_to_max_rank_mapping(all_items, id_to_name):
+    return {id_to_name[item["id"]]: item.get("maxRank") for item in all_items}
 
 
 def handle_search(args):
@@ -193,8 +201,8 @@ def wfm():
     user_info = get_user_info(authenticated_headers)
 
     all_items = get_all_items()
-    id_to_name = {item["id"]: item["i18n"]["en"]["name"] for item in all_items}
-    max_ranks = {id_to_name[item["id"]]: item.get("maxRank") for item in all_items}
+    id_to_name = build_id_to_name_mapping(all_items)
+    max_ranks = build_name_to_max_rank_mapping(all_items, id_to_name)
 
     session = PromptSession(history=FileHistory(HISTORY_FILE))
 
