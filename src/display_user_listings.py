@@ -78,6 +78,7 @@ def display_user_listings(
 ) -> None:
     """Main entry point."""
     user_listings = extract_user_listings(user, id_to_name)
+    breakpoint()
     filtered_item_listings = filter_listings(user_listings, rank, status="all")
     sorted_user_listings, sort_order = sort_listings(
         filtered_item_listings, sort, order, DEFAULT_ORDERS
