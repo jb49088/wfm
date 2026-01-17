@@ -96,7 +96,7 @@ def copy(listing: str, listings: list[dict[str, Any]]) -> None:
         f"Rank: {listing_to_copy['rank']}"
         if listing_to_copy.get("rank") is not None
         else "",
-        f"Price: {listing_to_copy['price']}",
+        f"Price: {listing_to_copy['price']}p",
     ]
     segments = [s for s in segments if s]
     message = f"/w {listing_to_copy['seller']} {' | '.join(segments)}"
