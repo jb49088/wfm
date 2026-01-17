@@ -245,7 +245,7 @@ def wfm() -> None:
             display_profile(user_info)
 
         elif action == "copy":
-            copy(args[0], current_listings)
+            copy(args[0], current_listings, max_ranks)
 
         elif action == "clear":
             clear_screen()

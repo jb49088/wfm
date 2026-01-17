@@ -87,18 +87,24 @@ def build_rows(
     return data_rows
 
 
-def copy(listing: str, listings: list[dict[str, Any]]) -> None:
+def copy(
+    listing: str, listings: list[dict[str, Any]], max_ranks: dict[str, int | None]
+) -> None:
     """Copy a listing for in-game whispering."""
     listing_to_copy = listings[int(listing) - 1]
+
+    item_name = listing_to_copy["item"]
+
+    if listing_to_copy.get("rank") is not None:
+        item_name = (
+            f"{item_name} (rank {listing_to_copy['rank']}/{max_ranks[item_name]})"
+        )
+
     segments = [
         "WTB",
-        f"{listing_to_copy['item']}",
-        f"Rank: {listing_to_copy['rank']}"
-        if listing_to_copy.get("rank") is not None
-        else "",
-        f"Price: {listing_to_copy['price']}p",
+        item_name,
+        f"{listing_to_copy['price']}p",
     ]
-    segments = [s for s in segments if s]
     message = f"/w {listing_to_copy['seller']} {' | '.join(segments)}"
 
     pyperclip.copy(message)
