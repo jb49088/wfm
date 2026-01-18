@@ -168,6 +168,14 @@ def change_all_visibility(visibility: bool, headers: dict[str, str]) -> None:
     r.raise_for_status()
 
 
+def delete_listing(id: str, headers: dict[str, str]) -> None:
+    r = requests.delete(
+        url=f"https://api.warframe.market/v2/order/{id}",
+        headers=headers,
+    )
+    r.raise_for_status()
+
+
 def display_profile(user_info: dict[str, Any]) -> None:
     """Display basic profile info for the authenticated user."""
     platform_mapping = {
@@ -291,6 +299,11 @@ def wfm() -> None:
                 listing_id = current_listings[int(args[0]) - 1]["id"]
                 change_visibility(False, listing_id, authenticated_headers)
                 print(f"\nListing {args[0]} is now hidden.\n")
+
+        elif action == "delete":
+            listing_id = current_listings[int(args[0]) - 1]["id"]
+            delete_listing(listing_id, authenticated_headers)
+            print(f"\nDeleted listing {args[0]}.\n")
 
         elif action == "copy":
             listing_to_copy = current_listings[int(args[0]) - 1]
