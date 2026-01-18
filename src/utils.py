@@ -58,6 +58,7 @@ def extract_user_listings(
         if listing["type"] == "sell":
             user_listings.append(
                 {
+                    "id": listing.get("id", ""),
                     "item": id_to_name[listing.get("itemId", "")],
                     "itemId": listing.get("itemId", ""),
                     "price": listing.get("platinum", 0),

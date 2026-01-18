@@ -88,12 +88,8 @@ def build_rows(
     return data_rows
 
 
-def copy(
-    listing: str, listings: list[dict[str, Any]], max_ranks: dict[str, int | None]
-) -> None:
+def copy(listing_to_copy: dict[str, Any], max_ranks: dict[str, int | None]) -> None:
     """Copy a listing for in-game whispering."""
-    listing_to_copy = listings[int(listing) - 1]
-
     item_name = listing_to_copy["item"]
 
     if listing_to_copy.get("rank") is not None:

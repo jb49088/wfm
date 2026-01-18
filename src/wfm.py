@@ -150,6 +150,24 @@ def handle_seller(args: list[str]) -> dict[str, Any]:
     return kwargs
 
 
+def change_visibility(visibility: bool, id: str, headers: dict[str, str]):
+    r = requests.patch(
+        url=f"https://api.warframe.market/v2/order/{id}",
+        json={"visible": visibility},
+        headers=headers,
+    )
+    r.raise_for_status()
+
+
+def change_all_visibility(visibility: bool, headers: dict[str, str]):
+    r = requests.patch(
+        url="https://api.warframe.market/v2/orders/group/all",
+        json={"type": "sell", "visible": visibility},
+        headers=headers,
+    )
+    r.raise_for_status()
+
+
 def display_profile(user_info: dict[str, Any]) -> None:
     """Display basic profile info for the authenticated user."""
     platform_mapping = {
@@ -256,11 +274,30 @@ def wfm() -> None:
                 id_to_name, max_ranks, seller_slug, seller_name, **kwargs
             )
 
-        elif action == "profile":
-            display_profile(user_info)
+        elif action == "show":
+            if args[0] == "all":
+                change_all_visibility(True, authenticated_headers)
+                print("\nAll listings are now visible.\n")
+            else:
+                listing_id = current_listings[int(args[0]) - 1]["id"]
+                change_visibility(True, listing_id, authenticated_headers)
+                print(f"\nListing {args[0]} is now visible.\n")
+
+        elif action == "hide":
+            if args[0] == "all":
+                change_all_visibility(False, authenticated_headers)
+                print("\nAll listings are now hidden.\n")
+            else:
+                listing_id = current_listings[int(args[0]) - 1]["id"]
+                change_visibility(False, listing_id, authenticated_headers)
+                print(f"\nListing {args[0]} is now hidden.\n")
 
         elif action == "copy":
-            copy(args[0], current_listings, max_ranks)
+            listing_to_copy = current_listings[int(args[0]) - 1]
+            copy(listing_to_copy, max_ranks)
+
+        elif action == "profile":
+            display_profile(user_info)
 
         elif action == "clear":
             clear_screen()
