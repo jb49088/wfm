@@ -48,6 +48,7 @@ def extract_item_listings(
             item_listings.append(
                 {
                     "seller": listing.get("user", {}).get("ingameName", "Unknown"),
+                    "slug": listing.get("user", {}).get("slug", "Unknown"),
                     "reputation": listing.get("user", {}).get("reputation", 0),
                     "status": listing.get("user", {}).get("status", "offline"),
                     "item": id_to_name[listing.get("itemId", "")],

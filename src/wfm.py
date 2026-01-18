@@ -18,6 +18,7 @@ from config import BROWSER_HEADERS
 from copy_user_listings import copy_user_listings
 from listings import listings
 from search import copy, search
+from seller import seller
 from utils import build_authenticated_headers, clear_screen
 
 APP_DIR = Path.home() / ".wfm"
@@ -130,6 +131,25 @@ def handle_listings(args: list[str]) -> dict[str, Any]:
     return kwargs
 
 
+def handle_seller(args: list[str]) -> dict[str, Any]:
+    """Parse arguments for displaying a sellers listings."""
+    kwargs = {
+        "sort": "updated",
+        "order": None,
+        "rank": None,
+    }
+
+    pairs = zip(args[1::2], args[2::2])
+
+    for key, value in pairs:
+        kwargs[key] = value
+
+    if kwargs["rank"]:
+        kwargs["rank"] = int(kwargs["rank"])
+
+    return kwargs
+
+
 def display_profile(user_info: dict[str, Any]) -> None:
     """Display basic profile info for the authenticated user."""
     platform_mapping = {
@@ -225,6 +245,15 @@ def wfm() -> None:
                 user_info["slug"],
                 authenticated_headers,
                 **kwargs,
+            )
+
+        elif action == "seller":
+            kwargs = handle_seller(args)
+            seller_num = int(args[0]) - 1
+            seller_slug = current_listings[seller_num]["slug"]
+            seller_name = current_listings[seller_num]["seller"]
+            current_listings = seller(
+                id_to_name, max_ranks, seller_slug, seller_name, **kwargs
             )
 
         elif action == "profile":
