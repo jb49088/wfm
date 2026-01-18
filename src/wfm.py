@@ -176,6 +176,46 @@ def delete_listing(id: str, headers: dict[str, str]) -> None:
     r.raise_for_status()
 
 
+def handle_edit(args: list[str], listing: dict[str, Any]) -> dict[str, Any]:
+    """Parse arguments for editing a listing."""
+    kwargs = {
+        "price": listing["price"],
+        "quantity": listing["quantity"],
+        "rank": listing["rank"],
+        "visible": listing["visible"],
+    }
+
+    pairs = zip(args[1::2], args[2::2])
+
+    for key, value in pairs:
+        if key != "visible":
+            value = int(value)
+        kwargs[key] = value
+
+    return kwargs
+
+
+def edit_listing(
+    id: str,
+    headers: dict[str, str],
+    price: int,
+    quantity: int,
+    rank: int,
+    visible: bool,
+) -> None:
+    r = requests.patch(
+        url=f"https://api.warframe.market/v2/order/{id}",
+        headers=headers,
+        json={
+            "platinum": price,
+            "quantity": quantity,
+            "rank": rank,
+            "visible": visible,
+        },
+    )
+    r.raise_for_status()
+
+
 def display_profile(user_info: dict[str, Any]) -> None:
     """Display basic profile info for the authenticated user."""
     platform_mapping = {
@@ -304,6 +344,13 @@ def wfm() -> None:
             listing_id = current_listings[int(args[0]) - 1]["id"]
             delete_listing(listing_id, authenticated_headers)
             print(f"\nDeleted listing {args[0]}.\n")
+
+        elif action == "edit":
+            listing_id = current_listings[int(args[0]) - 1]["id"]
+            listing_to_edit = current_listings[int(args[0]) - 1]
+            kwargs = handle_edit(args, listing_to_edit)
+            edit_listing(listing_id, authenticated_headers, **kwargs)
+            print(f"\nListing {args[0]} updated.\n")
 
         elif action == "copy":
             listing_to_copy = current_listings[int(args[0]) - 1]
