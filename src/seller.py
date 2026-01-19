@@ -2,7 +2,7 @@ from typing import Any
 
 import requests
 
-from config import BROWSER_HEADERS
+from config import USER_AGENT
 from utils import (
     determine_widths,
     display_listings,
@@ -28,7 +28,7 @@ def extract_seller_listings(
     """Extract and process listings for a specific user."""
     r = requests.get(
         url=f"https://api.warframe.market/v2/orders/user/{slug}",
-        headers=BROWSER_HEADERS,
+        headers=USER_AGENT,
     )
     r.raise_for_status()
 

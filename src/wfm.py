@@ -17,7 +17,7 @@ import requests
 from prompt_toolkit import ANSI, PromptSession
 from prompt_toolkit.history import FileHistory
 
-from config import BROWSER_HEADERS
+from config import USER_AGENT
 from links import links
 from listings import listings
 from search import search
@@ -74,9 +74,7 @@ def get_user_info(headers: dict[str, str]) -> dict[str, Any]:
 
 def get_all_items() -> list[dict[str, Any]]:
     """Extract all raw item data."""
-    r = requests.get(
-        url="https://api.warframe.market/v2/items", headers=BROWSER_HEADERS
-    )
+    r = requests.get(url="https://api.warframe.market/v2/items", headers=USER_AGENT)
     r.raise_for_status()
 
     return r.json()["data"]

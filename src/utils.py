@@ -2,7 +2,7 @@ from typing import Any
 
 import requests
 
-from config import BROWSER_HEADERS
+from config import USER_AGENT
 
 COLUMNS = [
     "#",
@@ -37,7 +37,7 @@ def build_authenticated_headers(cookies: dict[str, str]) -> dict[str, str]:
         "Cookie": f"JWT={cookies['jwt']}; cf_clearance={cookies['cf']}",
     }
 
-    headers.update(BROWSER_HEADERS)
+    headers.update(USER_AGENT)
 
     return headers
 
