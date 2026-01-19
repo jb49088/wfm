@@ -4,7 +4,6 @@
 
 # TODO: implement status changing
 # TODO: implemnt sync feature
-# TODO: move copy out of search.py
 
 import json
 import shlex
