@@ -4,7 +4,6 @@
 
 # TODO: implement status changing
 # TODO: implemnt sync feature
-# TODO: implement back command
 
 import json
 import shlex
