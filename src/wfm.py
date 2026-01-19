@@ -4,6 +4,8 @@
 
 # TODO: implement status changing
 # TODO: implemnt sync feature
+# TODO: implement cookies checking
+# TODO: implement project-wide error handling
 
 import json
 import shlex
@@ -326,7 +328,7 @@ def display_help() -> None:
 
 
 def wfm() -> None:
-    """Main entry point for wfm."""
+    """Main entry point and top-level orchestration function for wfm."""
     ensure_app_dir()
 
     if not COOKIES_FILE.exists():
