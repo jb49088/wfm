@@ -16,7 +16,7 @@ from prompt_toolkit import ANSI, PromptSession
 from prompt_toolkit.history import FileHistory
 
 from config import BROWSER_HEADERS
-from copy_user_listings import copy_user_listings
+from links import links
 from listings import listings
 from search import search
 from seller import seller
@@ -422,6 +422,9 @@ def wfm() -> None:
         elif action == "copy":
             listing_to_copy = current_listings[int(args[0]) - 1]
             copy(listing_to_copy, name_to_max_rank)
+
+        elif action == "links":
+            links(all_items, id_to_name, user_info["slug"], authenticated_headers)
 
         elif action == "profile":
             display_profile(user_info)

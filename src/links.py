@@ -99,31 +99,27 @@ def chunk_links(links: list[str]) -> list[str]:
 
 
 def copy_to_clipboard(chunks: list[str]) -> None:
-    """Copy items to clipboard."""
     for i, chunk in enumerate(chunks, 1):
         pyperclip.copy(chunk)
         if i < len(chunks):
             input(
-                f"Chunk {i}/{len(chunks)} copied ({len(chunk)} chars). Press Enter for next chunk..."
+                f"\nChunk {i}/{len(chunks)} copied ({len(chunk)} chars). Press Enter for next chunk..."
             )
         else:
-            print(f"Chunk {i}/{len(chunks)} copied ({len(chunk)} chars).")
+            print(f"\nChunk {i}/{len(chunks)} copied ({len(chunk)} chars).\n")
 
 
-def copy_user_listings(
+def links(
     all_items: list[dict[str, Any]],
     id_to_name: dict[str, str],
     user: str,
-    rank: int | None = None,
-    sort: str = "updated",
+    headers: dict[str, str],
+    sort: str = "item",
     order: str | None = None,
-):
+) -> None:
     """Main entry point."""
-    user_listings = extract_user_listings(user, id_to_name)
-    filtered_user_listings = filter_listings(user_listings, rank, status="all")
-    (sorted_user_listings, _) = sort_listings(
-        filtered_user_listings, sort, order, DEFAULT_ORDERS
-    )
+    user_listings = extract_user_listings(user, id_to_name, headers)
+    sorted_user_listings, _ = sort_listings(user_listings, sort, order, DEFAULT_ORDERS)
     expanded_listings = expand_item_sets(sorted_user_listings, all_items)
     links = convert_listings_to_links(expanded_listings)
     link_chunks = chunk_links(links)
