@@ -94,8 +94,7 @@ def build_name_to_slug_mapping(all_items: list[dict[str, Any]]) -> dict[str, str
     return {item["i18n"]["en"]["name"].lower(): item["slug"] for item in all_items}
 
 
-def handle_search(args: list[str]) -> tuple[str, dict[str, Any]]:
-    """Parse arguments for the search functionality."""
+def parse_search_args(args: list[str]) -> tuple[str, dict[str, Any]]:
     item = args[0]
 
     kwargs = {
@@ -117,8 +116,7 @@ def handle_search(args: list[str]) -> tuple[str, dict[str, Any]]:
     return item, kwargs
 
 
-def handle_listings(args: list[str]) -> dict[str, Any]:
-    """Parse arguments for displaying the currently authenticated user's listings."""
+def parse_listings_args(args: list[str]) -> dict[str, Any]:
     kwargs = {
         "sort": "updated",
         "order": None,
@@ -136,8 +134,7 @@ def handle_listings(args: list[str]) -> dict[str, Any]:
     return kwargs
 
 
-def handle_add(args: list[str], name_to_id: dict[str, str]) -> dict[str, Any]:
-    """Parse arguments for adding a listing."""
+def parse_add_args(args: list[str], name_to_id: dict[str, str]) -> dict[str, Any]:
     kwargs: dict[str, Any] = {"item_id": name_to_id[args[0]]}
 
     pairs = zip(args[1::2], args[2::2])
@@ -148,8 +145,7 @@ def handle_add(args: list[str], name_to_id: dict[str, str]) -> dict[str, Any]:
     return kwargs
 
 
-def handle_seller(args: list[str]) -> dict[str, Any]:
-    """Parse arguments for displaying a sellers listings."""
+def parse_seller_args(args: list[str]) -> dict[str, Any]:
     kwargs = {
         "sort": "updated",
         "order": None,
@@ -167,8 +163,7 @@ def handle_seller(args: list[str]) -> dict[str, Any]:
     return kwargs
 
 
-def handle_edit(args: list[str], listing: dict[str, Any]) -> dict[str, Any]:
-    """Parse arguments for editing a listing."""
+def parse_edit_args(args: list[str], listing: dict[str, Any]) -> dict[str, Any]:
     kwargs = {
         "price": listing["price"],
         "quantity": listing["quantity"],
@@ -345,12 +340,12 @@ def wfm() -> None:
         args = parts[1:]
 
         if action == "search":
-            item, kwargs = handle_search(args)
+            item, kwargs = parse_search_args(args)
             item_slug = name_to_slug[item.lower()]
             current_listings = search(item_slug, id_to_name, name_to_max_rank, **kwargs)
 
         elif action == "listings":
-            kwargs = handle_listings(args)
+            kwargs = parse_listings_args(args)
             current_listings = listings(
                 id_to_name,
                 name_to_max_rank,
@@ -360,7 +355,7 @@ def wfm() -> None:
             )
 
         elif action == "seller":
-            kwargs = handle_seller(args)
+            kwargs = parse_seller_args(args)
             seller_num = int(args[0]) - 1
             seller_slug = current_listings[seller_num]["slug"]
             seller_name = current_listings[seller_num]["seller"]
@@ -369,7 +364,7 @@ def wfm() -> None:
             )
 
         elif action == "add":
-            kwargs = handle_add(args, name_to_id)
+            kwargs = parse_add_args(args, name_to_id)
             add_listing(authenticated_headers, **kwargs)
             print("\nListing added.\n")
 
@@ -399,7 +394,7 @@ def wfm() -> None:
         elif action == "edit":
             listing_id = current_listings[int(args[0]) - 1]["id"]
             listing_to_edit = current_listings[int(args[0]) - 1]
-            kwargs = handle_edit(args, listing_to_edit)
+            kwargs = parse_edit_args(args, listing_to_edit)
             edit_listing(listing_id, authenticated_headers, **kwargs)
             print(f"\nListing {args[0]} updated.\n")
 
