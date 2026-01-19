@@ -29,11 +29,11 @@ def build_authenticated_headers(cookies: dict[str, str]) -> dict[str, str]:
     headers = {
         "Accept": "application/json, text/plain, */*",
         "Content-Type": "application/json",
+        "Origin": "https://warframe.market",
         "Referer": "https://warframe.market/",
         "language": "en",
         "platform": "pc",
         "crossplay": "true",
-        "Origin": "https://warframe.market",
         "Cookie": f"JWT={cookies['jwt']}; cf_clearance={cookies['cf']}",
     }
 
