@@ -110,16 +110,15 @@ def copy(listing_to_copy: dict[str, Any], max_ranks: dict[str, int | None]) -> N
 
 
 def search(
+    item_slug: str,
     id_to_name: dict[str, str],
     max_ranks: dict[str, int | None],
-    item: str,
     rank: int | None = None,
     sort: str = "price",
     order: str | None = None,
     status: str = "ingame",
 ) -> list[dict[str, Any]]:
     """Main entry point."""
-    item_slug = slugify_item_name(item)
     item_listings = extract_item_listings(item_slug, id_to_name)
     filtered_item_listings = filter_listings(item_listings, rank, status)
     sorted_item_listings, sort_order = sort_listings(

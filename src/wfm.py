@@ -89,6 +89,10 @@ def build_name_to_max_rank_mapping(
     return {id_to_name[item["id"]]: item.get("maxRank") for item in all_items}
 
 
+def build_name_to_slug_mapping(all_items: list[dict[str, Any]]) -> dict[str, str]:
+    return {item["i18n"]["en"]["name"].lower(): item["slug"] for item in all_items}
+
+
 def handle_search(args: list[str]) -> tuple[str, dict[str, Any]]:
     """Parse arguments for the search functionality."""
     item = args[0]
@@ -131,6 +135,18 @@ def handle_listings(args: list[str]) -> dict[str, Any]:
     return kwargs
 
 
+def handle_add(args: list[str], name_to_id: dict[str, str]) -> dict[str, Any]:
+    """Parse arguments for adding a listing."""
+    kwargs: dict[str, Any] = {"item_id": name_to_id[args[0]]}
+
+    pairs = zip(args[1::2], args[2::2])
+
+    for key, value in pairs:
+        kwargs[key] = int(value)
+
+    return kwargs
+
+
 def handle_seller(args: list[str]) -> dict[str, Any]:
     """Parse arguments for displaying a sellers listings."""
     kwargs = {
@@ -148,32 +164,6 @@ def handle_seller(args: list[str]) -> dict[str, Any]:
         kwargs["rank"] = int(kwargs["rank"])
 
     return kwargs
-
-
-def change_visibility(visibility: bool, id: str, headers: dict[str, str]) -> None:
-    r = requests.patch(
-        url=f"https://api.warframe.market/v2/order/{id}",
-        json={"visible": visibility},
-        headers=headers,
-    )
-    r.raise_for_status()
-
-
-def change_all_visibility(visibility: bool, headers: dict[str, str]) -> None:
-    r = requests.patch(
-        url="https://api.warframe.market/v2/orders/group/all",
-        json={"type": "sell", "visible": visibility},
-        headers=headers,
-    )
-    r.raise_for_status()
-
-
-def delete_listing(id: str, headers: dict[str, str]) -> None:
-    r = requests.delete(
-        url=f"https://api.warframe.market/v2/order/{id}",
-        headers=headers,
-    )
-    r.raise_for_status()
 
 
 def handle_edit(args: list[str], listing: dict[str, Any]) -> dict[str, Any]:
@@ -195,8 +185,57 @@ def handle_edit(args: list[str], listing: dict[str, Any]) -> dict[str, Any]:
     return kwargs
 
 
+def add_listing(
+    headers: dict[str, str], item_id: str, price: int, quantity: int, rank=None
+) -> None:
+    payload = {
+        "itemId": item_id,
+        "platinum": price,
+        "quantity": quantity,
+        "type": "sell",
+        "visible": True,
+    }
+    if rank is not None:
+        payload["rank"] = rank
+
+    r = requests.post(
+        url="https://api.warframe.market/v2/order",
+        json=payload,
+        headers=headers,
+    )
+    r.raise_for_status()
+
+
+def change_visibility(
+    listing_id: str, visibility: bool, headers: dict[str, str]
+) -> None:
+    r = requests.patch(
+        url=f"https://api.warframe.market/v2/order/{listing_id}",
+        json={"visible": visibility},
+        headers=headers,
+    )
+    r.raise_for_status()
+
+
+def change_all_visibility(visibility: bool, headers: dict[str, str]) -> None:
+    r = requests.patch(
+        url="https://api.warframe.market/v2/orders/group/all",
+        json={"type": "sell", "visible": visibility},
+        headers=headers,
+    )
+    r.raise_for_status()
+
+
+def delete_listing(listing_id: str, headers: dict[str, str]) -> None:
+    r = requests.delete(
+        url=f"https://api.warframe.market/v2/order/{listing_id}",
+        headers=headers,
+    )
+    r.raise_for_status()
+
+
 def edit_listing(
-    id: str,
+    listing_id: str,
     headers: dict[str, str],
     price: int,
     quantity: int,
@@ -204,7 +243,7 @@ def edit_listing(
     visible: bool,
 ) -> None:
     r = requests.patch(
-        url=f"https://api.warframe.market/v2/order/{id}",
+        url=f"https://api.warframe.market/v2/order/{listing_id}",
         headers=headers,
         json={
             "platinum": price,
@@ -279,11 +318,16 @@ def wfm() -> None:
 
     cookies = load_cookies()
     authenticated_headers = build_authenticated_headers(cookies)
+
     user_info = get_user_info(authenticated_headers)
 
     all_items = get_all_items()
+
     id_to_name = build_id_to_name_mapping(all_items)
-    max_ranks = build_name_to_max_rank_mapping(all_items, id_to_name)
+    name_to_max_rank = build_name_to_max_rank_mapping(all_items, id_to_name)
+
+    name_to_id = {v.lower(): k for k, v in id_to_name.items()}
+    name_to_slug = build_name_to_slug_mapping(all_items)
 
     session = PromptSession(history=FileHistory(HISTORY_FILE))
 
@@ -301,13 +345,14 @@ def wfm() -> None:
 
         if action == "search":
             item, kwargs = handle_search(args)
-            current_listings = search(id_to_name, max_ranks, item, **kwargs)
+            item_slug = name_to_slug[item.lower()]
+            current_listings = search(item_slug, id_to_name, name_to_max_rank, **kwargs)
 
         elif action == "listings":
             kwargs = handle_listings(args)
             current_listings = listings(
                 id_to_name,
-                max_ranks,
+                name_to_max_rank,
                 user_info["slug"],
                 authenticated_headers,
                 **kwargs,
@@ -319,8 +364,12 @@ def wfm() -> None:
             seller_slug = current_listings[seller_num]["slug"]
             seller_name = current_listings[seller_num]["seller"]
             current_listings = seller(
-                id_to_name, max_ranks, seller_slug, seller_name, **kwargs
+                id_to_name, name_to_max_rank, seller_slug, seller_name, **kwargs
             )
+
+        elif action == "add":
+            kwargs = handle_add(args, name_to_id)
+            add_listing(authenticated_headers, **kwargs)
 
         elif action == "show":
             if args[0] == "all":
@@ -328,7 +377,7 @@ def wfm() -> None:
                 print("\nAll listings are now visible.\n")
             else:
                 listing_id = current_listings[int(args[0]) - 1]["id"]
-                change_visibility(True, listing_id, authenticated_headers)
+                change_visibility(listing_id, True, authenticated_headers)
                 print(f"\nListing {args[0]} is now visible.\n")
 
         elif action == "hide":
@@ -337,7 +386,7 @@ def wfm() -> None:
                 print("\nAll listings are now hidden.\n")
             else:
                 listing_id = current_listings[int(args[0]) - 1]["id"]
-                change_visibility(False, listing_id, authenticated_headers)
+                change_visibility(listing_id, True, authenticated_headers)
                 print(f"\nListing {args[0]} is now hidden.\n")
 
         elif action == "delete":
@@ -354,7 +403,7 @@ def wfm() -> None:
 
         elif action == "copy":
             listing_to_copy = current_listings[int(args[0]) - 1]
-            copy(listing_to_copy, max_ranks)
+            copy(listing_to_copy, name_to_max_rank)
 
         elif action == "profile":
             display_profile(user_info)
