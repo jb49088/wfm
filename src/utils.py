@@ -1,6 +1,6 @@
 from typing import Any
 
-import requests
+import aiohttp
 
 from config import USER_AGENT
 
@@ -42,19 +42,19 @@ def build_authenticated_headers(cookies: dict[str, str]) -> dict[str, str]:
     return headers
 
 
-def extract_user_listings(
-    user: str, id_to_name: dict[str, str], headers
+async def extract_user_listings(
+    session: aiohttp.ClientSession, user: str, id_to_name: dict[str, str], headers
 ) -> list[dict[str, Any]]:
     """Extract and process listings for a specific user."""
-    r = requests.get(
+    async with session.get(
         url=f"https://api.warframe.market/v2/orders/user/{user.lower()}",
         headers=headers,
-    )
-    r.raise_for_status()
+    ) as r:
+        r.raise_for_status()
+        response_data = await r.json()
 
     user_listings = []
-
-    for listing in r.json()["data"]:
+    for listing in response_data["data"]:
         if listing["type"] == "sell":
             user_listings.append(
                 {

@@ -1,5 +1,7 @@
 from typing import Any
 
+import aiohttp
+
 from utils import (
     determine_widths,
     display_listings,
@@ -45,17 +47,18 @@ def build_rows(
     return data_rows
 
 
-def listings(
+async def listings(
     id_to_name: dict[str, str],
     max_ranks: dict[str, int | None],
     user: str,
     headers: dict[str, str],
+    session: aiohttp.ClientSession,
     rank: int | None = None,
     sort: str = "updated",
     order: str | None = None,
 ) -> list[dict[str, Any]]:
     """Main entry point."""
-    user_listings = extract_user_listings(user, id_to_name, headers)
+    user_listings = await extract_user_listings(session, user, id_to_name, headers)
     filtered_item_listings = filter_listings(user_listings, rank, status="all")
     sorted_user_listings, sort_order = sort_listings(
         filtered_item_listings, sort, order, DEFAULT_ORDERS

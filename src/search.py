@@ -1,6 +1,6 @@
 from typing import Any
 
-import requests
+import aiohttp
 
 from config import USER_AGENT
 from utils import (
@@ -30,19 +30,19 @@ def slugify_item_name(item: str) -> str:
     return item.lower().replace(" ", "_")
 
 
-def extract_item_listings(
-    item: str, id_to_name: dict[str, str]
+async def extract_item_listings(
+    session: aiohttp.ClientSession, item: str, id_to_name: dict[str, str]
 ) -> list[dict[str, Any]]:
     """Extract and process listings for a specific item."""
-    r = requests.get(
+    async with session.get(
         url=f"https://api.warframe.market/v2/orders/item/{item}",
         headers=USER_AGENT,
-    )
-    r.raise_for_status()
+    ) as r:
+        r.raise_for_status()
+        response_data = await r.json()
 
     item_listings = []
-
-    for listing in r.json()["data"]:
+    for listing in response_data["data"]:
         if listing["type"] == "sell":
             item_listings.append(
                 {
@@ -87,17 +87,18 @@ def build_rows(
     return data_rows
 
 
-def search(
+async def search(
     item_slug: str,
     id_to_name: dict[str, str],
     max_ranks: dict[str, int | None],
+    session: aiohttp.ClientSession,
     rank: int | None = None,
     sort: str = "price",
     order: str | None = None,
     status: str = "ingame",
 ) -> list[dict[str, Any]]:
     """Main entry point."""
-    item_listings = extract_item_listings(item_slug, id_to_name)
+    item_listings = await extract_item_listings(session, item_slug, id_to_name)
     filtered_item_listings = filter_listings(item_listings, rank, status)
     sorted_item_listings, sort_order = sort_listings(
         filtered_item_listings, sort, order, DEFAULT_ORDERS

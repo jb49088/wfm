@@ -1,10 +1,11 @@
 from typing import Any
 
+import aiohttp
 import pyperclip
+from prompt_toolkit import PromptSession
 
 from utils import (
     extract_user_listings,
-    filter_listings,
     sort_listings,
 )
 
@@ -98,29 +99,31 @@ def chunk_links(links: list[str]) -> list[str]:
     return chunks
 
 
-def copy_to_clipboard(chunks: list[str]) -> None:
+async def copy_to_clipboard(chunks: list[str], prompt_session: PromptSession) -> None:
     for i, chunk in enumerate(chunks, 1):
         pyperclip.copy(chunk)
         if i < len(chunks):
-            input(
+            await prompt_session.prompt_async(
                 f"\nChunk {i}/{len(chunks)} copied ({len(chunk)} chars). Press Enter for next chunk..."
             )
         else:
             print(f"\nChunk {i}/{len(chunks)} copied ({len(chunk)} chars).\n")
 
 
-def links(
+async def links(
     all_items: list[dict[str, Any]],
     id_to_name: dict[str, str],
     user: str,
     headers: dict[str, str],
+    session: aiohttp.ClientSession,
+    prompt_session: PromptSession,
     sort: str = "item",
     order: str | None = None,
 ) -> None:
     """Main entry point."""
-    user_listings = extract_user_listings(user, id_to_name, headers)
+    user_listings = await extract_user_listings(session, user, id_to_name, headers)
     sorted_user_listings, _ = sort_listings(user_listings, sort, order, DEFAULT_ORDERS)
     expanded_listings = expand_item_sets(sorted_user_listings, all_items)
     links = convert_listings_to_links(expanded_listings)
     link_chunks = chunk_links(links)
-    copy_to_clipboard(link_chunks)
+    await copy_to_clipboard(link_chunks, prompt_session)

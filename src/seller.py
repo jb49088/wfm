@@ -1,6 +1,6 @@
 from typing import Any
 
-import requests
+import aiohttp
 
 from config import USER_AGENT
 from utils import (
@@ -22,19 +22,19 @@ DEFAULT_ORDERS = {
 RIGHT_ALLIGNED_COLUMNS = ("price", "quantity")
 
 
-def extract_seller_listings(
-    slug: str, seller: str, id_to_name: dict[str, str]
+async def extract_seller_listings(
+    session: aiohttp.ClientSession, slug: str, seller: str, id_to_name: dict[str, str]
 ) -> list[dict[str, Any]]:
     """Extract and process listings for a specific user."""
-    r = requests.get(
+    async with session.get(
         url=f"https://api.warframe.market/v2/orders/user/{slug}",
         headers=USER_AGENT,
-    )
-    r.raise_for_status()
+    ) as r:
+        r.raise_for_status()
+        response_data = await r.json()
 
     user_listings = []
-
-    for listing in r.json()["data"]:
+    for listing in response_data["data"]:
         if listing["type"] == "sell":
             user_listings.append(
                 {
@@ -74,17 +74,18 @@ def build_rows(
     return data_rows
 
 
-def seller(
+async def seller(
     id_to_name: dict[str, str],
     max_ranks: dict[str, int | None],
     slug: str,
     seller: str,
+    session: aiohttp.ClientSession,
     rank: int | None = None,
     sort: str = "updated",
     order: str | None = None,
 ) -> list[dict[str, Any]]:
     """Main entry point."""
-    seller_listings = extract_seller_listings(slug, seller, id_to_name)
+    seller_listings = await extract_seller_listings(session, slug, seller, id_to_name)
     filtered_seller_listings = filter_listings(seller_listings, rank, status="all")
     sorted_seller_listings, sort_order = sort_listings(
         filtered_seller_listings, sort, order, DEFAULT_ORDERS

@@ -7,11 +7,13 @@
 # TODO: implement cookies checking
 # TODO: implement project-wide error handling
 
+import asyncio
 import json
 import shlex
 from pathlib import Path
 from typing import Any
 
+import aiohttp
 import pyperclip
 import requests
 from prompt_toolkit import ANSI, PromptSession
@@ -56,28 +58,33 @@ def load_cookies() -> dict[str, str]:
         return json.load(f)
 
 
-def get_user_info(headers: dict[str, str]) -> dict[str, Any]:
+async def get_user_info(
+    session: aiohttp.ClientSession, headers: dict[str, str]
+) -> dict[str, Any]:
     """Get the authenticated users profile info."""
-    r = requests.get(url="https://api.warframe.market/v2/me", headers=headers)
-    r.raise_for_status()
+    async with session.get(
+        url="https://api.warframe.market/v2/me", headers=headers
+    ) as r:
+        r.raise_for_status()
+        data = (await r.json())["data"]
 
-    data = r.json()["data"]
-
-    return {
-        "ingameName": data.get("ingameName", "Unknown"),
-        "slug": data["slug"],
-        "reputation": data.get("reputation", 0),
-        "platform": data["platform"],
-        "crossplay": data.get("crossplay", False),
-    }
+        return {
+            "ingameName": data.get("ingameName", "Unknown"),
+            "slug": data["slug"],
+            "reputation": data.get("reputation", 0),
+            "platform": data["platform"],
+            "crossplay": data.get("crossplay", False),
+        }
 
 
-def get_all_items() -> list[dict[str, Any]]:
+async def get_all_items(session: aiohttp.ClientSession) -> list[dict[str, Any]]:
     """Extract all raw item data."""
-    r = requests.get(url="https://api.warframe.market/v2/items", headers=USER_AGENT)
-    r.raise_for_status()
+    async with session.get(
+        url="https://api.warframe.market/v2/items", headers=USER_AGENT
+    ) as r:
+        r.raise_for_status()
 
-    return r.json()["data"]
+        return (await r.json())["data"]
 
 
 def build_id_to_name_mapping(all_items: list[dict[str, Any]]) -> dict[str, str]:
@@ -181,8 +188,13 @@ def parse_edit_args(args: list[str], listing: dict[str, Any]) -> dict[str, Any]:
     return kwargs
 
 
-def add_listing(
-    headers: dict[str, str], item_id: str, price: int, quantity: int, rank=None
+async def add_listing(
+    session: aiohttp.ClientSession,
+    headers: dict[str, str],
+    item_id: str,
+    price: int,
+    quantity: int,
+    rank=None,
 ) -> None:
     payload = {
         "itemId": item_id,
@@ -194,43 +206,49 @@ def add_listing(
     if rank is not None:
         payload["rank"] = rank
 
-    r = requests.post(
-        url="https://api.warframe.market/v2/order",
-        json=payload,
-        headers=headers,
-    )
-    r.raise_for_status()
+    async with session.post(
+        "https://api.warframe.market/v2/order", json=payload, headers=headers
+    ) as r:
+        r.raise_for_status()
 
 
-def change_visibility(
-    listing_id: str, visibility: bool, headers: dict[str, str]
+async def change_visibility(
+    session: aiohttp.ClientSession,
+    listing_id: str,
+    visibility: bool,
+    headers: dict[str, str],
 ) -> None:
-    r = requests.patch(
+    async with session.patch(
         url=f"https://api.warframe.market/v2/order/{listing_id}",
         json={"visible": visibility},
         headers=headers,
-    )
-    r.raise_for_status()
+    ) as r:
+        r.raise_for_status()
 
 
-def change_all_visibility(visibility: bool, headers: dict[str, str]) -> None:
-    r = requests.patch(
+async def change_all_visibility(
+    session: aiohttp.ClientSession, visibility: bool, headers: dict[str, str]
+) -> None:
+    async with session.patch(
         url="https://api.warframe.market/v2/orders/group/all",
         json={"type": "sell", "visible": visibility},
         headers=headers,
-    )
-    r.raise_for_status()
+    ) as r:
+        r.raise_for_status()
 
 
-def delete_listing(listing_id: str, headers: dict[str, str]) -> None:
-    r = requests.delete(
+async def delete_listing(
+    session: aiohttp.ClientSession, listing_id: str, headers: dict[str, str]
+) -> None:
+    async with session.delete(
         url=f"https://api.warframe.market/v2/order/{listing_id}",
         headers=headers,
-    )
-    r.raise_for_status()
+    ) as r:
+        r.raise_for_status()
 
 
-def edit_listing(
+async def edit_listing(
+    session: aiohttp.ClientSession,
     listing_id: str,
     headers: dict[str, str],
     price: int,
@@ -238,7 +256,7 @@ def edit_listing(
     rank: int,
     visible: bool,
 ) -> None:
-    r = requests.patch(
+    async with session.patch(
         url=f"https://api.warframe.market/v2/order/{listing_id}",
         headers=headers,
         json={
@@ -247,8 +265,8 @@ def edit_listing(
             "rank": rank,
             "visible": visible,
         },
-    )
-    r.raise_for_status()
+    ) as r:
+        r.raise_for_status()
 
 
 def copy(listing_to_copy: dict[str, Any], max_ranks: dict[str, int | None]) -> None:
@@ -325,7 +343,7 @@ def display_help() -> None:
     print()
 
 
-def wfm() -> None:
+async def wfm() -> None:
     """Main entry point and top-level orchestration function for wfm."""
     ensure_app_dir()
 
@@ -336,113 +354,132 @@ def wfm() -> None:
     cookies = load_cookies()
     authenticated_headers = build_authenticated_headers(cookies)
 
-    user_info = get_user_info(authenticated_headers)
+    async with aiohttp.ClientSession() as session:
+        user_info = await get_user_info(session, authenticated_headers)
+        all_items = await get_all_items(session)
 
-    all_items = get_all_items()
+        id_to_name = build_id_to_name_mapping(all_items)
+        name_to_max_rank = build_name_to_max_rank_mapping(all_items, id_to_name)
 
-    id_to_name = build_id_to_name_mapping(all_items)
-    name_to_max_rank = build_name_to_max_rank_mapping(all_items, id_to_name)
+        name_to_id = {v.lower(): k for k, v in id_to_name.items()}
+        name_to_slug = build_name_to_slug_mapping(all_items)
 
-    name_to_id = {v.lower(): k for k, v in id_to_name.items()}
-    name_to_slug = build_name_to_slug_mapping(all_items)
+        prompt_session = PromptSession(history=FileHistory(HISTORY_FILE))
 
-    session = PromptSession(history=FileHistory(HISTORY_FILE))
+        status = "\033[32mIn Game\033[0m"
 
-    status = "\033[32mIn Game\033[0m"
+        while True:
+            try:
+                cmd = await prompt_session.prompt_async(ANSI(f"wfm [{status}]> "))
+            except (KeyboardInterrupt, EOFError):
+                break
 
-    while True:
-        try:
-            cmd = session.prompt(ANSI(f"wfm [{status}]> ")).strip()
-        except KeyboardInterrupt:
-            break
+            parts = shlex.split(cmd)
+            action = parts[0].lower()
+            args = parts[1:]
 
-        parts = shlex.split(cmd)
-        action = parts[0].lower()
-        args = parts[1:]
+            if action == "search":
+                item, kwargs = parse_search_args(args)
+                item_slug = name_to_slug[item.lower()]
+                current_listings = await search(
+                    item_slug, id_to_name, name_to_max_rank, session, **kwargs
+                )
 
-        if action == "search":
-            item, kwargs = parse_search_args(args)
-            item_slug = name_to_slug[item.lower()]
-            current_listings = search(item_slug, id_to_name, name_to_max_rank, **kwargs)
+            elif action == "listings":
+                kwargs = parse_listings_args(args)
+                current_listings = await listings(
+                    id_to_name,
+                    name_to_max_rank,
+                    user_info["slug"],
+                    authenticated_headers,
+                    session,
+                    **kwargs,
+                )
 
-        elif action == "listings":
-            kwargs = parse_listings_args(args)
-            current_listings = listings(
-                id_to_name,
-                name_to_max_rank,
-                user_info["slug"],
-                authenticated_headers,
-                **kwargs,
-            )
+            elif action == "seller":
+                kwargs = parse_seller_args(args)
+                seller_num = int(args[0]) - 1
+                seller_slug = current_listings[seller_num]["slug"]
+                seller_name = current_listings[seller_num]["seller"]
+                current_listings = await seller(
+                    id_to_name,
+                    name_to_max_rank,
+                    seller_slug,
+                    seller_name,
+                    session,
+                    **kwargs,
+                )
 
-        elif action == "seller":
-            kwargs = parse_seller_args(args)
-            seller_num = int(args[0]) - 1
-            seller_slug = current_listings[seller_num]["slug"]
-            seller_name = current_listings[seller_num]["seller"]
-            current_listings = seller(
-                id_to_name, name_to_max_rank, seller_slug, seller_name, **kwargs
-            )
+            elif action == "add":
+                kwargs = parse_add_args(args, name_to_id)
+                await add_listing(session, authenticated_headers, **kwargs)
+                print("\nListing added.\n")
 
-        elif action == "add":
-            kwargs = parse_add_args(args, name_to_id)
-            add_listing(authenticated_headers, **kwargs)
-            print("\nListing added.\n")
+            elif action == "show":
+                if args[0] == "all":
+                    await change_all_visibility(session, True, authenticated_headers)
+                    print("\nAll listings are now visible.\n")
+                else:
+                    listing_id = current_listings[int(args[0]) - 1]["id"]
+                    await change_visibility(
+                        session, listing_id, True, authenticated_headers
+                    )
+                    print(f"\nListing {args[0]} is now visible.\n")
 
-        elif action == "show":
-            if args[0] == "all":
-                change_all_visibility(True, authenticated_headers)
-                print("\nAll listings are now visible.\n")
-            else:
+            elif action == "hide":
+                if args[0] == "all":
+                    await change_all_visibility(session, False, authenticated_headers)
+                    print("\nAll listings are now hidden.\n")
+                else:
+                    listing_id = current_listings[int(args[0]) - 1]["id"]
+                    await change_visibility(
+                        session, listing_id, False, authenticated_headers
+                    )
+                    print(f"\nListing {args[0]} is now hidden.\n")
+
+            elif action == "delete":
                 listing_id = current_listings[int(args[0]) - 1]["id"]
-                change_visibility(listing_id, True, authenticated_headers)
-                print(f"\nListing {args[0]} is now visible.\n")
+                await delete_listing(session, listing_id, authenticated_headers)
+                print(f"\nDeleted listing {args[0]}.\n")
 
-        elif action == "hide":
-            if args[0] == "all":
-                change_all_visibility(False, authenticated_headers)
-                print("\nAll listings are now hidden.\n")
-            else:
+            elif action == "edit":
                 listing_id = current_listings[int(args[0]) - 1]["id"]
-                change_visibility(listing_id, False, authenticated_headers)
-                print(f"\nListing {args[0]} is now hidden.\n")
+                listing_to_edit = current_listings[int(args[0]) - 1]
+                kwargs = parse_edit_args(args, listing_to_edit)
+                await edit_listing(session, listing_id, authenticated_headers, **kwargs)
+                print(f"\nListing {args[0]} updated.\n")
 
-        elif action == "delete":
-            listing_id = current_listings[int(args[0]) - 1]["id"]
-            delete_listing(listing_id, authenticated_headers)
-            print(f"\nDeleted listing {args[0]}.\n")
+            elif action == "copy":
+                listing_to_copy = current_listings[int(args[0]) - 1]
+                copy(listing_to_copy, name_to_max_rank)
 
-        elif action == "edit":
-            listing_id = current_listings[int(args[0]) - 1]["id"]
-            listing_to_edit = current_listings[int(args[0]) - 1]
-            kwargs = parse_edit_args(args, listing_to_edit)
-            edit_listing(listing_id, authenticated_headers, **kwargs)
-            print(f"\nListing {args[0]} updated.\n")
+            elif action == "links":
+                await links(
+                    all_items,
+                    id_to_name,
+                    user_info["slug"],
+                    authenticated_headers,
+                    session,
+                    prompt_session,
+                )
 
-        elif action == "copy":
-            listing_to_copy = current_listings[int(args[0]) - 1]
-            copy(listing_to_copy, name_to_max_rank)
+            elif action == "profile":
+                display_profile(user_info)
 
-        elif action == "links":
-            links(all_items, id_to_name, user_info["slug"], authenticated_headers)
+            elif action == "clear":
+                clear_screen()
 
-        elif action == "profile":
-            display_profile(user_info)
+            elif action == "help":
+                display_help()
 
-        elif action == "clear":
-            clear_screen()
+            elif action == "exit" or action == "quit":
+                break
 
-        elif action == "help":
-            display_help()
-
-        elif action == "exit" or action == "quit":
-            break
-
-        else:
-            print(
-                f"\nUnknown command: '{action}'. Use 'help' to see available commands.\n"
-            )
+            else:
+                print(
+                    f"\nUnknown command: '{action}'. Use 'help' to see available commands.\n"
+                )
 
 
 if __name__ == "__main__":
-    wfm()
+    asyncio.run(wfm())
