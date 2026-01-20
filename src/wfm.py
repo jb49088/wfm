@@ -10,6 +10,7 @@
 import asyncio
 import json
 import shlex
+import time
 from pathlib import Path
 from typing import Any
 
@@ -354,8 +355,9 @@ async def wfm() -> None:
     authenticated_headers = build_authenticated_headers(cookies)
 
     async with aiohttp.ClientSession() as session:
-        user_info = await get_user_info(session, authenticated_headers)
-        all_items = await get_all_items(session)
+        user_info, all_items = await asyncio.gather(
+            get_user_info(session, authenticated_headers), get_all_items(session)
+        )
 
         id_to_name = build_id_to_name_mapping(all_items)
         name_to_max_rank = build_name_to_max_rank_mapping(all_items, id_to_name)
