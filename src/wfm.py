@@ -15,7 +15,6 @@ from typing import Any
 
 import aiohttp
 import pyperclip
-import requests
 from prompt_toolkit import ANSI, PromptSession
 from prompt_toolkit.history import FileHistory
 
