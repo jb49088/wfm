@@ -10,6 +10,7 @@
 import asyncio
 import json
 import shlex
+from asyncio import QueueEmpty
 from pathlib import Path
 from typing import Any
 
@@ -350,7 +351,9 @@ def display_help() -> None:
 
 
 async def open_websocket(
-    cookie_header: dict[str, str], status: list, ready_event: asyncio.Event
+    cookie_header: dict[str, str],
+    status: list,
+    initial_status_event: asyncio.Event,
 ) -> None:
     """Connect to WebSocket, set initial status, then keep updating."""
     async with websockets.connect(
@@ -359,19 +362,12 @@ async def open_websocket(
     ) as ws:
         await ws.send('{"route":"@wfm|cmd/auth/signIn","payload":{"token":""}}')
 
-        waiting_for_initial_status = True
         while True:
-            try:
-                message = json.loads(await ws.recv())
-                if message.get("payload", {}).get("status"):
-                    status[0] = message["payload"]["status"]
-
-                    if waiting_for_initial_status:
-                        ready_event.set()
-                        waiting_for_initial_status = False
-
-            except websockets.ConnectionClosed:
-                break
+            message = json.loads(await ws.recv())
+            payload_status = message.get("payload", {}).get("status")
+            if payload_status:
+                status[0] = payload_status
+                initial_status_event.set()
 
 
 async def wfm() -> None:
@@ -387,11 +383,11 @@ async def wfm() -> None:
     authenticated_headers = build_authenticated_headers(cookie_header)
 
     async with aiohttp.ClientSession() as session:
-        ready_event = asyncio.Event()
+        initial_status_event = asyncio.Event()
         status = ["invisible"]
 
         websocket_task = asyncio.create_task(
-            open_websocket(cookie_header, status, ready_event)
+            open_websocket(cookie_header, status, initial_status_event)
         )
 
         user_info, all_items = await asyncio.gather(
@@ -399,7 +395,7 @@ async def wfm() -> None:
             get_all_items(session),
         )
 
-        await ready_event.wait()
+        await initial_status_event.wait()
 
         id_to_name = build_id_to_name_mapping(all_items)
         name_to_max_rank = build_name_to_max_rank_mapping(all_items, id_to_name)
@@ -506,6 +502,14 @@ async def wfm() -> None:
                     session,
                     prompt_session,
                 )
+
+            elif action == "status":
+                # message = {
+                #     "route": "@wfm|cmd/status/set",
+                #     "payload": {"status": args[0], "duration": "null"},
+                # }
+                # await status_queue.put(message)
+                pass
 
             elif action == "profile":
                 display_profile(user_info)
