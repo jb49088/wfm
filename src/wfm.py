@@ -352,8 +352,9 @@ def display_help() -> None:
 
 async def open_websocket(
     cookie_header: dict[str, str],
-    status: list,
+    status: dict[str, str],
     initial_status_event: asyncio.Event,
+    status_queue: asyncio.Queue,
 ) -> None:
     """Connect to WebSocket, set initial status, then keep updating."""
     async with websockets.connect(
@@ -362,12 +363,26 @@ async def open_websocket(
     ) as ws:
         await ws.send('{"route":"@wfm|cmd/auth/signIn","payload":{"token":""}}')
 
-        while True:
-            message = json.loads(await ws.recv())
-            payload_status = message.get("payload", {}).get("status")
-            if payload_status:
-                status[0] = payload_status
-                initial_status_event.set()
+        shared = {"current_response_event": None}
+
+        async def sender():
+            while True:
+                status_message, status_response_event = await status_queue.get()
+                await ws.send(status_message)
+                shared["current_response_event"] = status_response_event
+
+        async def receiver():
+            while True:
+                message = json.loads(await ws.recv())
+                payload_status = message.get("payload", {}).get("status")
+                if payload_status:
+                    status["status"] = payload_status
+                    initial_status_event.set()
+                    if shared["current_response_event"]:
+                        shared["current_response_event"].set()
+                        shared["current_response_event"] = None
+
+        await asyncio.gather(receiver(), sender())
 
 
 async def wfm() -> None:
@@ -384,10 +399,16 @@ async def wfm() -> None:
 
     async with aiohttp.ClientSession() as session:
         initial_status_event = asyncio.Event()
-        status = ["invisible"]
+        status_queue = asyncio.Queue()
+        status = {"status": "invisible"}
 
         websocket_task = asyncio.create_task(
-            open_websocket(cookie_header, status, initial_status_event)
+            open_websocket(
+                cookie_header,
+                status,
+                initial_status_event,
+                status_queue,
+            )
         )
 
         user_info, all_items = await asyncio.gather(
@@ -408,7 +429,7 @@ async def wfm() -> None:
         while True:
             try:
                 cmd = await prompt_session.prompt_async(
-                    ANSI(f"wfm [{STATUS_MAPPING[status[0]]}]> ")
+                    ANSI(f"wfm [{STATUS_MAPPING[status['status']]}]> ")
                 )
             except (KeyboardInterrupt, EOFError):
                 websocket_task.cancel()
@@ -504,12 +525,13 @@ async def wfm() -> None:
                 )
 
             elif action == "status":
-                # message = {
-                #     "route": "@wfm|cmd/status/set",
-                #     "payload": {"status": args[0], "duration": "null"},
-                # }
-                # await status_queue.put(message)
-                pass
+                message = {
+                    "route": "@wfm|cmd/status/set",
+                    "payload": {"status": args[0], "duration": None},
+                }
+                status_response_event = asyncio.Event()
+                await status_queue.put((json.dumps(message), status_response_event))
+                await status_response_event.wait()
 
             elif action == "profile":
                 display_profile(user_info)
