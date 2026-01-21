@@ -10,12 +10,12 @@
 import asyncio
 import json
 import shlex
-import time
 from pathlib import Path
 from typing import Any
 
 import aiohttp
 import pyperclip
+import websockets
 from prompt_toolkit import ANSI, PromptSession
 from prompt_toolkit.history import FileHistory
 
@@ -24,11 +24,17 @@ from links import links
 from listings import listings
 from search import search
 from seller import seller
-from utils import build_authenticated_headers, clear_screen
+from utils import build_authenticated_headers, build_cookie_header, clear_screen
 
 APP_DIR = Path.home() / ".wfm"
 COOKIES_FILE = APP_DIR / "cookies.json"
 HISTORY_FILE = APP_DIR / "history"
+
+STATUS_MAPPING = {
+    "invisible": "\033[31mOffline\033[0m",  # Red
+    "online": "\033[34mOnline\033[0m",  # Blue
+    "ingame": "\033[32mIn Game\033[0m",  # Green
+}
 
 
 def ensure_app_dir() -> None:
@@ -343,6 +349,31 @@ def display_help() -> None:
     print()
 
 
+async def open_websocket(
+    cookie_header: dict[str, str], status: list, ready_event: asyncio.Event
+) -> None:
+    """Connect to WebSocket, set initial status, then keep updating."""
+    async with websockets.connect(
+        uri="wss://ws.warframe.market/socket",
+        additional_headers={**cookie_header},
+    ) as ws:
+        await ws.send('{"route":"@wfm|cmd/auth/signIn","payload":{"token":""}}')
+
+        first_status_message = True
+        while True:
+            try:
+                message = json.loads(await ws.recv())
+                if message.get("payload", {}).get("status"):
+                    status[0] = message["payload"]["status"]
+
+                    if first_status_message:
+                        ready_event.set()
+                        first_status_message = False
+
+            except websockets.ConnectionClosed:
+                break
+
+
 async def wfm() -> None:
     """Main entry point and top-level orchestration function for wfm."""
     ensure_app_dir()
@@ -352,12 +383,23 @@ async def wfm() -> None:
         ensure_cookies_file(cookies)
 
     cookies = load_cookies()
-    authenticated_headers = build_authenticated_headers(cookies)
+    cookie_header = build_cookie_header(cookies)
+    authenticated_headers = build_authenticated_headers(cookie_header)
 
     async with aiohttp.ClientSession() as session:
-        user_info, all_items = await asyncio.gather(
-            get_user_info(session, authenticated_headers), get_all_items(session)
+        ready_event = asyncio.Event()
+        status = ["invisible"]
+
+        websocket_task = asyncio.create_task(
+            open_websocket(cookie_header, status, ready_event)
         )
+
+        user_info, all_items = await asyncio.gather(
+            get_user_info(session, authenticated_headers),
+            get_all_items(session),
+        )
+
+        await ready_event.wait()
 
         id_to_name = build_id_to_name_mapping(all_items)
         name_to_max_rank = build_name_to_max_rank_mapping(all_items, id_to_name)
@@ -367,12 +409,13 @@ async def wfm() -> None:
 
         prompt_session = PromptSession(history=FileHistory(HISTORY_FILE))
 
-        status = "\033[32mIn Game\033[0m"
-
         while True:
             try:
-                cmd = await prompt_session.prompt_async(ANSI(f"wfm [{status}]> "))
+                cmd = await prompt_session.prompt_async(
+                    ANSI(f"wfm [{STATUS_MAPPING[status[0]]}]> ")
+                )
             except (KeyboardInterrupt, EOFError):
+                websocket_task.cancel()
                 break
 
             parts = shlex.split(cmd)

@@ -24,7 +24,13 @@ def clear_screen() -> None:
     print("\033[2J\033[H", end="")
 
 
-def build_authenticated_headers(cookies: dict[str, str]) -> dict[str, str]:
+def build_cookie_header(cookies: dict[str, str]) -> dict[str, str]:
+    return {
+        "Cookie": f"JWT={cookies['jwt']}; cf_clearance={cookies['cf']}",
+    }
+
+
+def build_authenticated_headers(cookie_header: dict[str, str]) -> dict[str, str]:
     """Build authenticated headers with cookies."""
     headers = {
         "Accept": "application/json, text/plain, */*",
@@ -34,10 +40,9 @@ def build_authenticated_headers(cookies: dict[str, str]) -> dict[str, str]:
         "language": "en",
         "platform": "pc",
         "crossplay": "true",
-        "Cookie": f"JWT={cookies['jwt']}; cf_clearance={cookies['cf']}",
+        **USER_AGENT,
+        **cookie_header,
     }
-
-    headers.update(USER_AGENT)
 
     return headers
 
@@ -47,7 +52,7 @@ async def extract_user_listings(
 ) -> list[dict[str, Any]]:
     """Extract and process listings for a specific user."""
     async with session.get(
-        url=f"https://api.warframe.market/v2/orders/user/{user.lower()}",
+        url=f"https://api.warframe.market/v2/orders/user/{user}",
         headers=headers,
     ) as r:
         r.raise_for_status()
