@@ -235,6 +235,7 @@ async def wfm() -> None:
             #     )
 
             elif action == "profile":
+                user_info = await get_user_info(session, authenticated_headers)
                 display_profile(user_info)
 
             elif action == "clear":
