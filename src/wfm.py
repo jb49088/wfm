@@ -107,6 +107,8 @@ async def wfm() -> None:
 
         prompt_session = PromptSession(history=FileHistory(HISTORY_FILE))
 
+        current_listings = []
+
         while True:
             try:
                 cmd = await prompt_session.prompt_async(
@@ -121,8 +123,21 @@ async def wfm() -> None:
             args = parts[1:]
 
             if action == "search":
-                item, kwargs = parse_search_args(args)
-                item_slug = name_to_slug[item.lower()]
+                if args[0].isdigit() and current_listings:
+                    listing_index = int(args[0]) - 1
+                    if 0 <= listing_index < len(current_listings):
+                        _, kwargs = parse_search_args(args)
+                        item_name = current_listings[listing_index]["item"]
+                        item_slug = name_to_slug[item_name.lower()]
+                    else:
+                        print(
+                            f"\nInvalid listing number. Valid range: 1-{len(current_listings)}\n"
+                        )
+                        continue
+                else:
+                    item, kwargs = parse_search_args(args)
+                    item_slug = name_to_slug[item.lower()]
+
                 current_listings = await search(
                     item_slug, id_to_name, name_to_max_rank, session, **kwargs
                 )
