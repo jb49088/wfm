@@ -33,7 +33,7 @@ from auth import (
     load_cookies,
     prompt_for_cookies,
 )
-from commands import copy, links, listings, search, seller
+from commands import copy, links, listings, search, seller, sync
 from config import HISTORY_FILE
 from display import clear_screen, display_help, display_profile
 from parsers import (
@@ -213,6 +213,11 @@ async def wfm() -> None:
                 status_response_event = asyncio.Event()
                 await status_queue.put((json.dumps(message), status_response_event))
                 await status_response_event.wait()
+
+            # elif action == "sync":
+            #     await sync(
+            #         id_to_name, user_info["slug"], authenticated_headers, session
+            #     )
 
             elif action == "profile":
                 display_profile(user_info)

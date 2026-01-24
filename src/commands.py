@@ -56,7 +56,6 @@ async def search(
     order: str | None = None,
     status: str = "ingame",
 ) -> list[dict[str, Any]]:
-    """Main entry point."""
     item_listings = await extract_item_listings(session, item_slug, id_to_name)
     filtered_item_listings = filter_listings(item_listings, rank, status)
     sorted_item_listings, sort_order = sort_listings(
@@ -82,11 +81,10 @@ async def listings(
     sort: str = "updated",
     order: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Main entry point."""
     user_listings = await extract_user_listings(session, user, id_to_name, headers)
     filtered_item_listings = filter_listings(user_listings, rank, status="all")
     sorted_user_listings, sort_order = sort_listings(
-        filtered_item_listings, sort, order, DEFAULT_ORDERS
+        filtered_item_listings, sort, order, {**DEFAULT_ORDERS, "price": "desc"}
     )
     data_rows = build_listings_rows(sorted_user_listings, max_ranks)
     column_widths = determine_widths(data_rows, sort)
@@ -108,7 +106,6 @@ async def seller(
     sort: str = "updated",
     order: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Main entry point."""
     seller_listings = await extract_seller_listings(session, slug, seller, id_to_name)
     filtered_seller_listings = filter_listings(seller_listings, rank, status="all")
     sorted_seller_listings, sort_order = sort_listings(
@@ -239,7 +236,7 @@ async def links(
 # ===================================== SYNC =====================================
 
 
-def get_ee_log_path() -> Path:
+def _get_ee_log_path() -> Path:
     if sys.platform == "win32":
         return Path.home() / "AppData/Local/Warframe/EE.log"
     elif sys.platform == "linux":
@@ -268,7 +265,7 @@ def get_ee_log_path() -> Path:
         raise RuntimeError(f"\nUnsupported platform: {sys.platform}\n")
 
 
-def extract_trade_chunks(lines: list[str]) -> list[list[str]]:
+def _extract_trade_chunks(lines: list[str]) -> list[list[str]]:
     trade_chunks = []
     current_chunk = []
     recording = False
@@ -289,9 +286,13 @@ def extract_trade_chunks(lines: list[str]) -> list[list[str]]:
     return trade_chunks
 
 
-def parse_trade_items(
+def _parse_trade_items(
     trade_chunks: list[list[str]],
 ) -> list[dict[str, tuple[str, ...]]]:
+    def normalize_item_name(raw_name: str) -> str:
+        name = raw_name.split("(")[0].strip()
+        return name
+
     parsed_trades = []
     for chunk in trade_chunks:
         offered_items = []
@@ -315,16 +316,33 @@ def parse_trade_items(
 
         parsed_trades.append(
             {
-                "offered": tuple(item for item in offered_items if item),
-                "received": tuple(item for item in received_items if item),
+                "offered": tuple(
+                    normalize_item_name(item) for item in offered_items if item
+                ),
+                "received": tuple(
+                    normalize_item_name(item) for item in received_items if item
+                ),
             }
         )
 
     return parsed_trades
 
 
-def sync():
-    ee_log_path = get_ee_log_path()
+def _compare_listings_to_trades(listings, trades):
+    for listing in listings:
+        for trade in trades:
+            if listing["item"] in trade["offered"]:
+                pass
+
+
+async def sync(
+    id_to_name: dict[str, str],
+    user: str,
+    headers: dict[str, str],
+    session: aiohttp.ClientSession,
+):
+    user_listings = await extract_user_listings(session, user, id_to_name, headers)
+    ee_log_path = _get_ee_log_path()
     lines = ee_log_path.read_text().splitlines()
-    trade_chunks = extract_trade_chunks(lines)
-    trades = parse_trade_items(trade_chunks)
+    trade_chunks = _extract_trade_chunks(lines)
+    trades = _parse_trade_items(trade_chunks)

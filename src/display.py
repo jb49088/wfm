@@ -12,7 +12,6 @@ COLUMNS = [
     "visibility",
     "updated",
 ]
-
 ARROW_MAPPING = {"desc": "↓", "asc": "↑"}
 
 DEFAULT_ORDERS = {
@@ -23,11 +22,14 @@ DEFAULT_ORDERS = {
     "price": "asc",
     "rank": "desc",
     "quantity": "desc",
+    "visibility": "desc",
     "created": "desc",
     "updated": "desc",
 }
-STATUS_MAPPING = {"offline": "Offline", "online": "Online", "ingame": "In Game"}
+
 RIGHT_ALLIGNED_COLUMNS = ("price", "quantity", "reputation")
+
+STATUS_MAPPING = {"offline": "Offline", "online": "Online", "ingame": "In Game"}
 
 
 # ================================= ROW BUILDERS =================================

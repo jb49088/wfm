@@ -28,11 +28,12 @@ def sort_listings(
     )
 
     def get_sort_key(listing):
-        if listing[sort_by] is None:
-            return float("-inf") if is_desc else float("inf")
-
+        # Special case: user-facing sort name is "visibility" but data key is "visible"
         if sort_by == "visibility":
             return "visible" if listing["visible"] else "hidden"
+
+        if listing[sort_by] is None:
+            return float("-inf") if is_desc else float("inf")
 
         return listing[sort_by]
 
