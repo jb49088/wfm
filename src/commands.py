@@ -416,10 +416,12 @@ async def sync(
     headers: dict[str, str],
 ):
     user_listings = await extract_user_listings(session, user, id_to_name, headers)
-    log_path = _get_log_path()
+    # log_path = _get_log_path()
+    log_path = Path("/mnt/c/Users/justin/Desktop/r1 hotshot ee.txt")
     state = _load_sync_state()
     lines, offset = _get_log_lines(log_path, state)
-    _save_sync_state(offset)
+    # _save_sync_state(offset)
     trade_chunks = _extract_trade_chunks(lines)
     trades = _parse_trade_items(trade_chunks)
+    breakpoint()
     await _update_listings(user_listings, trades, session, headers)

@@ -136,6 +136,7 @@ async def extract_seller_listings(
 async def add_listing(
     session: aiohttp.ClientSession,
     headers: dict[str, str],
+    id_to_tags: dict[str, set[str]],
     item_id: str,
     price: int,
     quantity: int,
@@ -150,6 +151,9 @@ async def add_listing(
     }
     if rank is not None:
         payload["rank"] = rank
+
+    if "arcane_enhancement" in id_to_tags[item_id]:
+        payload["perTrade"] = 1
 
     async with session.post(
         "https://api.warframe.market/v2/order", json=payload, headers=headers
@@ -194,21 +198,28 @@ async def delete_listing(
 
 async def edit_listing(
     session: aiohttp.ClientSession,
-    listing_id: str,
     headers: dict[str, str],
+    listing_id: str,
+    item_id: str,
+    id_to_tags: dict[str, set[str]],
     price: int,
     quantity: int,
     rank: int,
     visible: bool,
 ) -> None:
+    payload = {
+        "platinum": price,
+        "quantity": quantity,
+        "rank": rank,
+        "visible": visible,
+    }
+
+    if "arcane_enhancement" in id_to_tags[item_id]:
+        payload["perTrade"] = 1
+
     async with session.patch(
         url=f"https://api.warframe.market/v2/order/{listing_id}",
         headers=headers,
-        json={
-            "platinum": price,
-            "quantity": quantity,
-            "rank": rank,
-            "visible": visible,
-        },
+        json=payload,
     ) as r:
         r.raise_for_status()

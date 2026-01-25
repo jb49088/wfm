@@ -5,6 +5,7 @@
 # TODO: implement cookies checking
 # TODO: implement project-wide error handling
 # TODO: implement bumping feature
+# TODO: implement perTrade = 1 to payload for adding and editing arcanes
 
 import asyncio
 import json
@@ -56,6 +57,10 @@ def build_id_to_name_mapping(all_items: list[dict[str, Any]]) -> dict[str, str]:
     return {item["id"]: item["i18n"]["en"]["name"] for item in all_items}
 
 
+def build_id_to_tags_mapping(all_items: list[dict[str, Any]]) -> dict[str, set[str]]:
+    return {item["id"]: set(item["tags"]) for item in all_items}
+
+
 def build_name_to_max_rank_mapping(
     all_items: list[dict[str, Any]], id_to_name: dict[str, str]
 ) -> dict[str, int | None]:
@@ -101,8 +106,8 @@ async def wfm() -> None:
         await initial_status_event.wait()
 
         id_to_name = build_id_to_name_mapping(all_items)
+        id_to_tags = build_id_to_tags_mapping(all_items)
         name_to_max_rank = build_name_to_max_rank_mapping(all_items, id_to_name)
-
         name_to_id = {v.lower(): k for k, v in id_to_name.items()}
         name_to_slug = build_name_to_slug_mapping(all_items)
 
@@ -170,7 +175,7 @@ async def wfm() -> None:
 
             elif action == "add":
                 kwargs = parse_add_args(args, name_to_id)
-                await add_listing(session, authenticated_headers, **kwargs)
+                await add_listing(session, authenticated_headers, id_to_tags, **kwargs)
                 print("\nListing added.\n")
 
             elif action == "show":
@@ -201,11 +206,21 @@ async def wfm() -> None:
                 print(f"\nDeleted listing {args[0]}.\n")
 
             elif action == "edit":
-                listing_id = current_listings[int(args[0]) - 1]["id"]
-                listing_to_edit = current_listings[int(args[0]) - 1]
-                kwargs = parse_edit_args(args, listing_to_edit)
-                await edit_listing(session, listing_id, authenticated_headers, **kwargs)
+                listing = current_listings[int(args[0]) - 1]
+                kwargs = parse_edit_args(args, listing)
+                await edit_listing(
+                    session,
+                    authenticated_headers,
+                    listing["id"],
+                    listing["itemId"],
+                    id_to_tags,
+                    **kwargs,
+                )
                 print(f"\nListing {args[0]} updated.\n")
+
+            # elif action == "bump":
+            #     if args[0] == "all":
+            #         pass
 
             elif action == "copy":
                 listing_to_copy = current_listings[int(args[0]) - 1]
