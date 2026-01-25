@@ -2,7 +2,6 @@
 # =                                     WFM                                      =
 # ================================================================================
 
-# TODO: implemnt sync feature
 # TODO: implement cookies checking
 # TODO: implement project-wide error handling
 
