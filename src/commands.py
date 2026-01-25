@@ -132,6 +132,7 @@ def _get_base_name(item_name: str) -> str:
         "Neuroptics",
         "Chassis",
         "Systems",
+        "Gauntlet",
         "Link",
         "Wings",
         "Pouch",
