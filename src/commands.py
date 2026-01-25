@@ -1,3 +1,5 @@
+import asyncio
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -7,7 +9,14 @@ import aiohttp
 import pyperclip
 from prompt_toolkit import PromptSession
 
-from api import extract_item_listings, extract_seller_listings, extract_user_listings
+from api import (
+    delete_listing,
+    edit_listing,
+    extract_item_listings,
+    extract_seller_listings,
+    extract_user_listings,
+)
+from config import SYNC_STATE_FILE
 from display import (
     DEFAULT_ORDERS,
     RIGHT_ALLIGNED_COLUMNS,
@@ -237,7 +246,7 @@ async def links(
 # ===================================== SYNC =====================================
 
 
-def _get_ee_log_path() -> Path:
+def _get_log_path() -> Path:
     if sys.platform == "win32":
         return Path.home() / "AppData/Local/Warframe/EE.log"
     elif sys.platform == "linux":
@@ -329,21 +338,88 @@ def _parse_trade_items(
     return parsed_trades
 
 
-def _compare_listings_to_trades(listings, trades):
+def _load_sync_state() -> dict[str, int]:
+    if not SYNC_STATE_FILE.exists():
+        return {"last_byte_offset": 0}
+
+    with SYNC_STATE_FILE.open("r") as f:
+        return json.load(f)
+
+
+def _save_sync_state(offset) -> None:
+    with SYNC_STATE_FILE.open("w") as f:
+        json.dump({"last_byte_offset": offset}, f)
+
+
+def _get_log_lines(log_path: Path, state: dict[str, int]) -> tuple[list[str], int]:
+    with log_path.open("rb") as f:
+        file_size = log_path.stat().st_size
+
+        if file_size < state["last_byte_offset"]:
+            state["last_byte_offset"] = 0
+
+        f.seek(state["last_byte_offset"])
+        lines = f.read().decode("utf-8").splitlines()
+        offset = f.tell()
+
+    return lines, offset
+
+
+async def _update_listings(
+    listings: list[dict[str, Any]],
+    trades: list[dict[str, tuple[str, ...]]],
+    session: aiohttp.ClientSession,
+    headers: dict[str, str],
+) -> None:
+    """Decrement quantities or delete listings based on trade patterns in EE.log"""
+    print("\nSyncing listings...")
+    items_sold = {}
+    for trade in trades:
+        for item in trade["offered"]:
+            items_sold[item] = items_sold.get(item, 0) + 1
+
     for listing in listings:
-        for trade in trades:
-            if listing["item"] in trade["offered"]:
-                pass
+        item_name = listing["item"]
+        sold_count = items_sold.get(item_name, 0)
+
+        if sold_count == 0:
+            continue  # Nothing sold for this item
+
+        new_quantity = listing["quantity"] - sold_count
+
+        if new_quantity <= 0:
+            await delete_listing(session, listing["id"], headers)
+            print(f"\n{item_name} listing has been deleted.")
+        else:
+            await edit_listing(
+                session,
+                listing["id"],
+                headers,
+                listing["price"],
+                new_quantity,
+                listing["rank"],
+                listing["visible"],
+            )
+            print(
+                f"\n{item_name} listing quantity updated from {listing['quantity']} to {new_quantity}."
+            )
+
+        print()
+
+        await asyncio.sleep(0.4)  # Rate limit
 
 
 async def sync(
     id_to_name: dict[str, str],
     user: str,
-    headers: dict[str, str],
     session: aiohttp.ClientSession,
+    headers: dict[str, str],
 ):
     user_listings = await extract_user_listings(session, user, id_to_name, headers)
-    ee_log_path = _get_ee_log_path()
-    lines = ee_log_path.read_text().splitlines()
+    log_path = _get_log_path()
+    state = _load_sync_state()
+    lines, offset = _get_log_lines(log_path, state)
+    _save_sync_state(offset)
     trade_chunks = _extract_trade_chunks(lines)
     trades = _parse_trade_items(trade_chunks)
+    await _update_listings(user_listings, trades, session, headers)

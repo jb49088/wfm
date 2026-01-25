@@ -229,10 +229,10 @@ async def wfm() -> None:
                 await status_queue.put((json.dumps(message), status_response_event))
                 await status_response_event.wait()
 
-            # elif action == "sync":
-            #     await sync(
-            #         id_to_name, user_info["slug"], authenticated_headers, session
-            #     )
+            elif action == "sync":
+                await sync(
+                    id_to_name, user_info["slug"], authenticated_headers, session
+                )
 
             elif action == "profile":
                 user_info = await get_user_info(session, authenticated_headers)
