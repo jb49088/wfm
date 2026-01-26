@@ -5,7 +5,6 @@
 # TODO: implement cookies checking
 # TODO: implement project-wide error handling
 # TODO: implement bumping feature
-# TODO: implement perTrade = 1 to payload for adding and editing arcanes
 
 import asyncio
 import json
