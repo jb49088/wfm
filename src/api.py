@@ -137,6 +137,7 @@ async def add_listing(
     session: aiohttp.ClientSession,
     headers: dict[str, str],
     id_to_tags: dict[str, set[str]],
+    id_to_bulkTradable: dict[str, bool],
     item_id: str,
     price: int,
     quantity: int,
@@ -152,7 +153,7 @@ async def add_listing(
     if rank is not None:
         payload["rank"] = rank
 
-    if "arcane_enhancement" in id_to_tags[item_id]:
+    if "arcane_enhancement" in id_to_tags[item_id] and id_to_bulkTradable[item_id]:
         payload["perTrade"] = 1
 
     async with session.post(
@@ -202,6 +203,7 @@ async def edit_listing(
     listing_id: str,
     item_id: str,
     id_to_tags: dict[str, set[str]],
+    id_to_bulkTradable: dict[str, bool],
     price: int,
     quantity: int,
     rank: int,
@@ -214,7 +216,7 @@ async def edit_listing(
         "visible": visible,
     }
 
-    if "arcane_enhancement" in id_to_tags[item_id]:
+    if "arcane_enhancement" in id_to_tags[item_id] and id_to_bulkTradable[item_id]:
         payload["perTrade"] = 1
 
     async with session.patch(

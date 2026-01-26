@@ -61,6 +61,12 @@ def build_id_to_tags_mapping(all_items: list[dict[str, Any]]) -> dict[str, set[s
     return {item["id"]: set(item["tags"]) for item in all_items}
 
 
+def build_id_to_bulkTradable_mapping(
+    all_items: list[dict[str, Any]],
+) -> dict[str, bool]:
+    return {item["id"]: item.get("bulkTradable", False) for item in all_items}
+
+
 def build_name_to_max_rank_mapping(
     all_items: list[dict[str, Any]], id_to_name: dict[str, str]
 ) -> dict[str, int | None]:
@@ -107,6 +113,7 @@ async def wfm() -> None:
 
         id_to_name = build_id_to_name_mapping(all_items)
         id_to_tags = build_id_to_tags_mapping(all_items)
+        id_to_bulkTradable = build_id_to_bulkTradable_mapping(all_items)
         name_to_max_rank = build_name_to_max_rank_mapping(all_items, id_to_name)
         name_to_id = {v.lower(): k for k, v in id_to_name.items()}
         name_to_slug = build_name_to_slug_mapping(all_items)
@@ -175,7 +182,13 @@ async def wfm() -> None:
 
             elif action == "add":
                 kwargs = parse_add_args(args, name_to_id)
-                await add_listing(session, authenticated_headers, id_to_tags, **kwargs)
+                await add_listing(
+                    session,
+                    authenticated_headers,
+                    id_to_tags,
+                    id_to_bulkTradable,
+                    **kwargs,
+                )
                 print("\nListing added.\n")
 
             elif action == "show":
@@ -214,6 +227,7 @@ async def wfm() -> None:
                     listing["id"],
                     listing["itemId"],
                     id_to_tags,
+                    id_to_bulkTradable,
                     **kwargs,
                 )
                 print(f"\nListing {args[0]} updated.\n")
@@ -247,7 +261,12 @@ async def wfm() -> None:
 
             elif action == "sync":
                 await sync(
-                    id_to_name, user_info["slug"], session, authenticated_headers
+                    id_to_name,
+                    id_to_tags,
+                    id_to_bulkTradable,
+                    user_info["slug"],
+                    session,
+                    authenticated_headers,
                 )
 
             elif action == "profile":

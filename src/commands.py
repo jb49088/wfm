@@ -366,6 +366,8 @@ def _get_log_lines(log_path: Path, state: dict[str, int]) -> tuple[list[str], in
 
 
 async def _update_listings(
+    id_to_tags: dict[str, set[str]],
+    id_to_bulkTradable: dict[str, bool],
     listings: list[dict[str, Any]],
     trades: list[dict[str, tuple[str, ...]]],
     session: aiohttp.ClientSession,
@@ -393,8 +395,11 @@ async def _update_listings(
         else:
             await edit_listing(
                 session,
-                listing["id"],
                 headers,
+                listing["id"],
+                listing["itemId"],
+                id_to_tags,
+                id_to_bulkTradable,
                 listing["price"],
                 new_quantity,
                 listing["rank"],
@@ -411,17 +416,20 @@ async def _update_listings(
 
 async def sync(
     id_to_name: dict[str, str],
+    id_to_tags: dict[str, set[str]],
+    id_to_bulkTradable: dict[str, bool],
     user: str,
     session: aiohttp.ClientSession,
     headers: dict[str, str],
 ):
     user_listings = await extract_user_listings(session, user, id_to_name, headers)
-    # log_path = _get_log_path()
-    log_path = Path("/mnt/c/Users/justin/Desktop/r1 hotshot ee.txt")
+    log_path = _get_log_path()
     state = _load_sync_state()
     lines, offset = _get_log_lines(log_path, state)
-    # _save_sync_state(offset)
+    _save_sync_state(offset)
     trade_chunks = _extract_trade_chunks(lines)
     trades = _parse_trade_items(trade_chunks)
     breakpoint()
-    await _update_listings(user_listings, trades, session, headers)
+    await _update_listings(
+        id_to_tags, id_to_bulkTradable, user_listings, trades, session, headers
+    )
