@@ -181,7 +181,7 @@ def display_profile(user_info: dict[str, Any]) -> None:
     """Display basic profile info for the authenticated user."""
     platform_mapping = {
         "pc": "PC",
-        "ps4": "PS4",
+        "ps4": "PlayStation",
         "xbox": "Xbox",
         "switch": "Nintendo Switch",
         "mobile": "Mobile",
