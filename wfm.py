@@ -47,9 +47,9 @@ from parsers import (
 from websocket import open_websocket
 
 STATUS_MAPPING = {
-    "invisible": "\033[2mInvisible\033[0m",  # Grey
-    "online": "\033[34mOnline\033[0m",  # Blue
     "ingame": "\033[32mIn Game\033[0m",  # Green
+    "online": "\033[34mOnline\033[0m",  # Blue
+    "invisible": "\033[2mInvisible\033[0m",  # Grey
 }
 
 
@@ -315,6 +315,16 @@ async def wfm() -> None:
                 )
 
             elif action == "status":
+                if not args:
+                    print(f"\nUsage: status <{'|'.join(STATUS_MAPPING)}>\n")
+                    continue
+
+                if args[0] not in STATUS_MAPPING:
+                    print(
+                        f"\nInvalid status '{args[0]}'. Valid options: {', '.join(STATUS_MAPPING)}\n"
+                    )
+                    continue
+
                 message = {
                     "route": "@wfm|cmd/status/set",
                     "payload": {"status": args[0], "duration": None},
@@ -348,7 +358,7 @@ async def wfm() -> None:
 
             else:
                 print(
-                    f"\nUnknown command: '{action}'. Use 'help' to see available commands.\n"
+                    f"\nUnknown command: '{' '.join(parts)}'. Use 'help' to see available commands.\n"
                 )
 
 
