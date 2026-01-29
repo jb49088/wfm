@@ -145,6 +145,9 @@ async def listings(
     order: str | None = None,
 ) -> list[dict[str, Any]]:
     user_listings = await extract_user_listings(session, user, id_to_name, headers)
+    if not user_listings:
+        print("\nNo listings found.\n")
+        return []
     filtered_item_listings = filter_listings(user_listings, rank, status="all")
     sorted_user_listings, sort_order = sort_listings(
         filtered_item_listings, sort, order, {**DEFAULT_ORDERS, "price": "desc"}
