@@ -301,6 +301,17 @@ async def wfm() -> None:
                 print()
 
             elif action == "copy":
+                if not args:
+                    print("\nUsage: copy <number>\n")
+                    continue
+                if not current_listings:
+                    print("\nNo listings available. Use 'search <item>' first.\n")
+                    continue
+                if "seller" not in current_listings:
+                    print(
+                        "\nCannot copy your own listings. Use 'search <item>' to find other sellers.\n"
+                    )
+                    continue
                 listing_to_copy = current_listings[int(args[0]) - 1]
                 copy(listing_to_copy, name_to_max_rank)
 
