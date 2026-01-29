@@ -29,6 +29,57 @@ from display import (
 )
 from filters import filter_listings, sort_listings
 
+PART_SUFFIXES = [
+    "Set",
+    "Blueprint",
+    "Barrel",
+    "Receiver",
+    "Casing",
+    "Pod",
+    "Weapon Pod",
+    "Engine",
+    "Stock",
+    "Neuroptics",
+    "Chassis",
+    "Systems",
+    "Gauntlet",
+    "Link",
+    "Buckle",
+    "Carapace",
+    "Cerebrum",
+    "Band",
+    "Wings",
+    "Pouch",
+    "Stars",
+    "Harness",
+    "Grip",
+    "Blade",
+    "Lower Limb",
+    "Handle",
+    "Upper Limb",
+    "String",
+]
+
+UNLINKABLE_ITEMS = {
+    "Primed Chamber",
+    "Ancient Fusion Core",
+    "Legendary Fusion Core",
+    "Cephalon Suda Augment Mod",
+    "Steel Meridian Augment Mod",
+    "The Perrin Sequence Augment Mod",
+    "Arbiters of Hexis Augment Mod",
+    "Red Veil Augment Mod",
+    "New Loka Augment Mod",
+    "Scan Aquatic Lifeforms",
+    "Corpus Void Key",
+    "Vay Hek Frequency Triangulator",
+    "Grendel Systems Locator",
+    "Grendel Chassis Locator",
+    "Grendel Neuroptics Locator",
+    "Companion Weapon Riven Mod (Veiled)",
+    "Equilibrium (Steam Pinnacle Pack)",
+    "Baro Void-Signal (Key)",
+}
 UNICODE_RANK_PATTERN = re.compile(r"[\uE000-\uF8FF]")
 
 # ===================================== COPY =====================================
@@ -135,35 +186,8 @@ async def seller(
 
 def _get_base_name(item_name: str) -> str:
     """Extract base name without part suffixes."""
-    part_words = [
-        "Set",
-        "Blueprint",
-        "Barrel",
-        "Receiver",
-        "Stock",
-        "Neuroptics",
-        "Chassis",
-        "Systems",
-        "Gauntlet",
-        "Link",
-        "Buckle",
-        "Carapace",
-        "Cerebrum",
-        "Band",
-        "Wings",
-        "Pouch",
-        "Stars",
-        "Harness",
-        "Grip",
-        "Blade",
-        "Lower Limb",
-        "Handle",
-        "Upper Limb",
-        "String",
-    ]
     words = item_name.split()
-    # Remove known part words from the end
-    while words and words[-1] in part_words:
+    while words and words[-1] in PART_SUFFIXES:
         words.pop()
 
     return " ".join(words)
@@ -173,7 +197,7 @@ def _expand_item_sets(
     user_listings: list[dict[str, Any]], all_items: list[dict[str, Any]]
 ) -> list[str]:
     """Expand set items into individual parts for the set."""
-    expanded_listings = []
+    expanded_items = []
 
     for listing in user_listings:
         if listing["item"].endswith(" Set"):
@@ -182,20 +206,26 @@ def _expand_item_sets(
                 item_name = item["i18n"]["en"]["name"]
                 item_base = _get_base_name(item_name)
                 if set_base == item_base and item_name != listing["item"]:
-                    expanded_listings.append(item_name)
+                    expanded_items.append(item_name)
         else:
-            expanded_listings.append(listing["item"])
+            expanded_items.append(listing["item"])
 
-    return expanded_listings
+    return expanded_items
 
 
-def _convert_listings_to_links(listings: list[str]) -> list[str]:
+def _filter_unlinkable_items(items: list[str]) -> list[str]:
+    filtered_items = [item for item in items if item not in UNLINKABLE_ITEMS]
+
+    return filtered_items
+
+
+def _convert_items_to_links(items: list[str]) -> list[str]:
     """Process and format item names for ingame pasting."""
     return [
         f"[{listing.replace(' Blueprint', '')}]"
         if "Blueprint" in listing
         else f"[{listing}]"
-        for listing in listings
+        for listing in items
     ]
 
 
@@ -218,6 +248,17 @@ def _chunk_links(links: list[str]) -> list[str]:
         chunks.append(" ".join(current_chunk))
 
     return chunks
+
+
+def _print_prep_status(total_items: int, skipped_items: int) -> None:
+    link_count = total_items - skipped_items
+    links_str = "link" if link_count == 1 else "links"
+    items_str = "item" if skipped_items == 1 else "items"
+
+    skipped_msg = (
+        f" Skipped {skipped_items} unlinkable {items_str}." if skipped_items > 0 else ""
+    )
+    print(f"\nPrepared {link_count} {links_str}.{skipped_msg}")
 
 
 async def _copy_to_clipboard(chunks: list[str], prompt_session: PromptSession) -> None:
@@ -244,9 +285,11 @@ async def links(
     """Main entry point."""
     user_listings = await extract_user_listings(session, user, id_to_name, headers)
     sorted_user_listings, _ = sort_listings(user_listings, sort, order, DEFAULT_ORDERS)
-    expanded_listings = _expand_item_sets(sorted_user_listings, all_items)
-    links = _convert_listings_to_links(expanded_listings)
+    expanded_items = _expand_item_sets(sorted_user_listings, all_items)
+    filtered_items = _filter_unlinkable_items(expanded_items)
+    links = _convert_items_to_links(filtered_items)
     link_chunks = _chunk_links(links)
+    _print_prep_status(len(expanded_items), len(expanded_items) - len(filtered_items))
     await _copy_to_clipboard(link_chunks, prompt_session)
 
 
