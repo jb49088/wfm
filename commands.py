@@ -284,6 +284,9 @@ async def links(
 ) -> None:
     """Main entry point."""
     user_listings = await extract_user_listings(session, user, id_to_name, headers)
+    if not user_listings:
+        print("\nNo listings found.\n")
+        return
     sorted_user_listings, _ = sort_listings(user_listings, sort, order, DEFAULT_ORDERS)
     expanded_items = _expand_item_sets(sorted_user_listings, all_items)
     filtered_items = _filter_unlinkable_items(expanded_items)
