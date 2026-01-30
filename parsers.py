@@ -41,15 +41,27 @@ def parse_listings_args(args: list[str]) -> dict[str, Any]:
     return kwargs
 
 
-def parse_add_args(args: list[str], name_to_id: dict[str, str]) -> dict[str, Any]:
+def parse_add_args(
+    args: list[str], name_to_id: dict[str, str]
+) -> tuple[bool, str | None, dict[str, Any]]:
+    if not args:
+        return (False, "No item specified.", {})
+    if args[0] not in name_to_id:
+        return (False, f"'{args[0]}' is not a valid item.", {})
+
     kwargs: dict[str, Any] = {"item_id": name_to_id[args[0]]}
-
     pairs = zip(args[1::2], args[2::2])
-
     for key, value in pairs:
         kwargs[key] = int(value)
 
-    return kwargs
+    if "price" not in kwargs and "quantity" not in kwargs:
+        return (False, "No price or quantity specified.", {})
+    elif "price" not in kwargs:
+        return (False, "No price specified.", {})
+    elif "quantity" not in kwargs:
+        return (False, "No quantity specified.", {})
+
+    return (True, None, kwargs)
 
 
 def parse_seller_args(args: list[str]) -> dict[str, Any]:

@@ -238,15 +238,11 @@ async def wfm() -> None:
                 )
 
             elif action == "add":
-                if not args:
-                    print(
-                        "\nUsage: add <item> price <amount> quantity <number> [rank <number>]\n"
-                    )
+                success, message, kwargs = parse_add_args(args, name_to_id)
+                if not success:
+                    print(f"\n{message}\n")
                     continue
-                if args[0] not in name_to_id:
-                    print(f"\nItem '{args[0]}' is not a valid item.\n")
-                    continue
-                kwargs = parse_add_args(args, name_to_id)
+
                 success, message = await add_listing(
                     session,
                     authenticated_headers,
