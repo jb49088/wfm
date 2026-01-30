@@ -136,6 +136,8 @@ async def extract_seller_listings(
 async def add_listing(
     session: aiohttp.ClientSession,
     headers: dict[str, str],
+    id_to_max_rank: dict[str, int | None],
+    id_to_name: dict[str, str],
     id_to_tags: dict[str, set[str]],
     id_to_bulkTradable: dict[str, bool],
     item_id: str,
@@ -150,16 +152,34 @@ async def add_listing(
         "type": "sell",
         "visible": True,
     }
+
+    item_name = id_to_name[item_id]
+    max_rank: int | None = id_to_max_rank[item_id]
+    item_tags = id_to_tags[item_id]
+    is_bulk_tradeable = id_to_bulkTradable[item_id]
+
     if rank is not None:
+        if max_rank is None:
+            print(f"\n{item_name} does not have ranks.\n")
+            return
+        if rank < 0 or rank > max_rank:
+            print(f"\nInvalid rank for {item_name}. Valid range: 0-{max_rank}\n")
+            return
         payload["rank"] = rank
 
-    if "arcane_enhancement" in id_to_tags[item_id] and id_to_bulkTradable[item_id]:
+    if rank is None and max_rank is not None:
+        print(f"\nYou must enter a rank for {item_name}. Valid range: 0-{max_rank}\n")
+        return
+
+    if "arcane_enhancement" in item_tags and is_bulk_tradeable:
         payload["perTrade"] = 1
 
     async with session.post(
         "https://api.warframe.market/v2/order", json=payload, headers=headers
     ) as r:
         r.raise_for_status()
+
+    print("\nListing added.\n")
 
 
 async def change_visibility(

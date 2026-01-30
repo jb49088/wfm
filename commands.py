@@ -87,12 +87,11 @@ UNICODE_RANK_PATTERN = re.compile(r"[\uE000-\uF8FF]")
 
 def copy(listing_to_copy: dict[str, Any], max_ranks: dict[str, int | None]) -> None:
     """Copy a listing for in-game whispering."""
+    item_id = listing_to_copy["itemId"]
     item_name = listing_to_copy["item"]
 
     if listing_to_copy.get("rank") is not None:
-        item_name = (
-            f"{item_name} (rank {listing_to_copy['rank']}/{max_ranks[item_name]})"
-        )
+        item_name = f"{item_name} (rank {listing_to_copy['rank']}/{max_ranks[item_id]})"
 
     segments = [
         "WTB",

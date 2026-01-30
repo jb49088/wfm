@@ -67,14 +67,16 @@ def build_id_to_bulkTradable_mapping(
     return {item["id"]: item.get("bulkTradable", False) for item in all_items}
 
 
-def build_name_to_max_rank_mapping(
-    all_items: list[dict[str, Any]], id_to_name: dict[str, str]
+def build_id_to_max_rank_mapping(
+    all_items: list[dict[str, Any]],
 ) -> dict[str, int | None]:
-    return {id_to_name[item["id"]]: item.get("maxRank") for item in all_items}
+    return {item["id"]: item.get("maxRank") for item in all_items}
 
 
-def build_name_to_slug_mapping(all_items: list[dict[str, Any]]) -> dict[str, str]:
-    return {item["i18n"]["en"]["name"].lower(): item["slug"] for item in all_items}
+def build_id_to_slug_mapping(
+    all_items: list[dict[str, Any]],
+) -> dict[str, str]:
+    return {item["id"]: item["slug"] for item in all_items}
 
 
 async def wfm() -> None:
@@ -140,9 +142,10 @@ async def wfm() -> None:
         id_to_name = build_id_to_name_mapping(all_items)
         id_to_tags = build_id_to_tags_mapping(all_items)
         id_to_bulkTradable = build_id_to_bulkTradable_mapping(all_items)
-        name_to_max_rank = build_name_to_max_rank_mapping(all_items, id_to_name)
+        id_to_max_rank = build_id_to_max_rank_mapping(all_items)
+        id_to_slug = build_id_to_slug_mapping(all_items)
+
         name_to_id = {v.lower(): k for k, v in id_to_name.items()}
-        name_to_slug = build_name_to_slug_mapping(all_items)
 
         prompt_session = PromptSession(history=FileHistory(HISTORY_FILE))
 
@@ -163,14 +166,16 @@ async def wfm() -> None:
 
             if action == "search":
                 if not args:
-                    print("\nUsage: search <item|number>\n")
+                    print(
+                        "\nUsage: search <item|number> [sort <field>] [order <asc|desc>] [rank <number>] [status <all|ingame|online|offline>]\n"
+                    )
                     continue
                 if args[0].isdigit() and current_listings:
                     listing_index = int(args[0]) - 1
                     if 0 <= listing_index < len(current_listings):
                         _, kwargs = parse_search_args(args)
-                        item_name = current_listings[listing_index]["item"]
-                        item_slug = name_to_slug[item_name.lower()]
+                        item_id = current_listings[listing_index]["itemId"]
+                        item_slug = id_to_slug[item_id]
                     else:
                         print("\nListing number out of range.\n")
                         continue
@@ -179,20 +184,21 @@ async def wfm() -> None:
                     if item.isdigit() and not current_listings:
                         print("\nNo active listings to reference.\n")
                         continue
-                    if item.lower() not in name_to_slug:
+                    if item.lower() not in name_to_id:
                         print(f"\nItem '{item}' not found.\n")
                         continue
-                    item_slug = name_to_slug[item.lower()]
+                    item_id = name_to_id[item]
+                    item_slug = id_to_slug[item_id]
 
                 current_listings = await search(
-                    item_slug, id_to_name, name_to_max_rank, session, **kwargs
+                    item_slug, id_to_name, id_to_max_rank, session, **kwargs
                 )
 
             elif action == "listings":
                 kwargs = parse_listings_args(args)
                 current_listings = await listings(
                     id_to_name,
-                    name_to_max_rank,
+                    id_to_max_rank,
                     user_info["slug"],
                     authenticated_headers,
                     session,
@@ -221,7 +227,7 @@ async def wfm() -> None:
                 kwargs = parse_seller_args(args)
                 current_listings = await seller(
                     id_to_name,
-                    name_to_max_rank,
+                    id_to_max_rank,
                     seller_slug,
                     seller_name,
                     session,
@@ -229,15 +235,24 @@ async def wfm() -> None:
                 )
 
             elif action == "add":
+                if not args:
+                    print(
+                        "\nUsage: add <item> price <amount> quantity <number> [rank <number>]\n"
+                    )
+                    continue
+                if args[0] not in name_to_id:
+                    print(f"\nItem '{args[0]}' is not a valid item.\n")
+                    continue
                 kwargs = parse_add_args(args, name_to_id)
                 await add_listing(
                     session,
                     authenticated_headers,
+                    id_to_max_rank,
+                    id_to_name,
                     id_to_tags,
                     id_to_bulkTradable,
                     **kwargs,
                 )
-                print("\nListing added.\n")
 
             elif action == "show":
                 if args[0] == "all":
@@ -337,7 +352,7 @@ async def wfm() -> None:
                     print("\nCannot copy your own listings.\n")
                     continue
                 listing_to_copy = current_listings[listing_index]
-                copy(listing_to_copy, name_to_max_rank)
+                copy(listing_to_copy, id_to_max_rank)
 
             elif action == "links":
                 await links(

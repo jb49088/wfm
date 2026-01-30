@@ -51,7 +51,7 @@ def build_seller_rows(
         }
 
         if show_rank and listing.get("rank") is not None:
-            row["rank"] = f"{listing['rank']}/{max_ranks[listing['item']]}"
+            row["rank"] = f"{listing['rank']}/{max_ranks[listing['itemId']]}"
 
         data_rows.append(row)
 
@@ -75,7 +75,7 @@ def build_listings_rows(
         }
 
         if show_rank and listing.get("rank") is not None:
-            row["rank"] = f"{listing['rank']}/{max_ranks[listing['item']]}"
+            row["rank"] = f"{listing['rank']}/{max_ranks[listing['itemId']]}"
 
         data_rows.append(row)
 
@@ -100,7 +100,7 @@ def build_search_rows(
         }
 
         if listing.get("rank") is not None:
-            row["rank"] = f"{listing['rank']}/{max_ranks[listing['item']]}"
+            row["rank"] = f"{listing['rank']}/{max_ranks[listing['itemId']]}"
 
         data_rows.append(row)
 
@@ -213,7 +213,7 @@ def display_help() -> None:
     print("      Example: seller 5 sort price")
     print()
     print("  listings [sort <field>] [order <asc|desc>] [rank <number>]")
-    print("      Display your active listings (all filters optional)")
+    print("      Display your active listings")
     print("      Example: listings")
     print("      Example: listings sort price")
     print("      Example: listings rank 0 sort updated order desc")
@@ -245,7 +245,7 @@ def display_help() -> None:
     print(
         "  edit <number> [price <amount>] [quantity <amount>] [rank <number>] [visible <true|false>]"
     )
-    print("      Edit listing details (all fields optional)")
+    print("      Edit listing details")
     print("      Example: edit 3 price 50")
     print("      Example: edit 3 quantity 5 price 100")
     print("      Example: edit 3 visible false")
