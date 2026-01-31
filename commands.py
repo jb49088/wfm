@@ -145,7 +145,7 @@ async def listings(
 ) -> tuple[bool, str | None, list[dict[str, Any]]]:
     user_listings = await extract_user_listings(session, user, id_to_name, headers)
     if not user_listings:
-        return (False, "No listings found.", [])
+        return (False, "No listings available.", [])
     filtered_item_listings = filter_listings(user_listings, rank, status="all")
     sorted_user_listings, sort_order = sort_listings(
         filtered_item_listings, sort, order, {**DEFAULT_ORDERS, "price": "desc"}
@@ -253,13 +253,9 @@ def _chunk_links(links: list[str]) -> list[str]:
 
 def _print_prep_status(total_items: int, skipped_items: int) -> None:
     link_count = total_items - skipped_items
-    links_str = "link" if link_count == 1 else "links"
-    items_str = "item" if skipped_items == 1 else "items"
-
-    skipped_msg = (
-        f" Skipped {skipped_items} unlinkable {items_str}." if skipped_items > 0 else ""
-    )
-    print(f"\nPrepared {link_count} {links_str}.{skipped_msg}")
+    print(f"\nPrepared {link_count} links.")
+    if skipped_items > 0:
+        print(f"Skipped {skipped_items} unlinkable items.")
 
 
 async def _copy_to_clipboard(chunks: list[str], prompt_session: PromptSession) -> None:
@@ -267,10 +263,10 @@ async def _copy_to_clipboard(chunks: list[str], prompt_session: PromptSession) -
         pyperclip.copy(chunk)
         if i < len(chunks):
             await prompt_session.prompt_async(
-                f"\nChunk {i}/{len(chunks)} copied ({len(chunk)} chars). Press Enter for next chunk..."
+                f"\nChunk {i}/{len(chunks)} copied. Press Enter..."
             )
         else:
-            print(f"\nChunk {i}/{len(chunks)} copied ({len(chunk)} chars).\n")
+            print(f"\nChunk {i}/{len(chunks)} copied.\n")
 
 
 async def links(
@@ -283,10 +279,9 @@ async def links(
     sort: str = "item",
     order: str | None = None,
 ) -> tuple[bool, str | None]:
-    """Main entry point."""
     user_listings = await extract_user_listings(session, user, id_to_name, headers)
     if not user_listings:
-        return (False, "No listings found.")
+        return (False, "No listings available.")
     sorted_user_listings, _ = sort_listings(user_listings, sort, order, DEFAULT_ORDERS)
     expanded_items = _expand_item_sets(sorted_user_listings, all_items)
     filtered_items = _filter_unlinkable_items(expanded_items)
@@ -446,27 +441,22 @@ async def _update_listings(
 
         sync_occurred = True
 
-        plat_received = 0
-        for received_item in trade["received"]:
-            if "Platinum" in received_item:
-                plat_received += int(received_item.split()[-1])
+        plat_received = sum(
+            int(item.split()[-1]) for item in trade["received"] if "Platinum" in item
+        )
 
         item_count = trade["offered"].count(candidates[0]["item"])
-
         plat_per_item = plat_received // item_count
-
         candidate = min(
             candidates, key=lambda listing: abs(plat_per_item - listing["price"])
         )
 
         candidate["quantity"] -= item_count
 
-        print("\nSyncing listings...\n")
-
         if candidate["quantity"] <= 0:
             await delete_listing(session, candidate["id"], headers)
             listings.remove(candidate)
-            print(f"{candidate['item']} listing has been deleted.")
+            print(f"Deleted {candidate['item']} listing.")
         else:
             await edit_listing(
                 session,
@@ -481,13 +471,13 @@ async def _update_listings(
                 candidate["visible"],
             )
             print(
-                f"{candidate['item']} listing quantity updated from {candidate['quantity'] + item_count} to {candidate['quantity']}."
+                f"Updated {candidate['item']} listing quantity to {candidate['quantity']}."
             )
 
         await asyncio.sleep(0.5)  # Rate limit
 
     if not sync_occurred:
-        print("\nNo listings to sync.\n")
+        print("\nNo listings synced.\n")
 
 
 async def sync(
@@ -507,7 +497,7 @@ async def sync(
     _save_sync_state(offset)
     trade_chunks = _extract_trade_chunks(lines)
     if not trade_chunks:
-        return (False, "No recent trades found.")
+        return (False, "No trades found.")
     trades = _parse_trade_items(trade_chunks)
     await _update_listings(
         id_to_tags, id_to_bulkTradable, user_listings, trades, session, headers

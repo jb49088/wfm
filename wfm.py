@@ -44,6 +44,7 @@ from parsers import (
     parse_search_args,
     parse_seller_args,
 )
+from validators import validate_add_args
 from websocket import open_websocket
 
 STATUS_MAPPING = {
@@ -237,26 +238,23 @@ async def wfm() -> None:
                 )
 
             elif action == "add":
-                success, message, kwargs = parse_add_args(args, name_to_id)
+                kwargs = parse_add_args(args)
+                success, message = validate_add_args(
+                    kwargs,
+                    name_to_id,
+                    id_to_name,
+                    id_to_max_rank,
+                    id_to_tags,
+                    id_to_bulkTradable,
+                )
                 if not success:
                     print(f"\n{message}\n")
                     continue
 
-                success, message = await add_listing(
-                    session,
-                    authenticated_headers,
-                    id_to_max_rank,
-                    id_to_name,
-                    id_to_tags,
-                    id_to_bulkTradable,
-                    **kwargs,
-                )
+                await add_listing(session, authenticated_headers, **kwargs)
 
-                if success:
-                    item_name = id_to_name[kwargs["item_id"]]
-                    print(f"\n{item_name} listing added.\n")
-                else:
-                    print(f"\n{message}\n")
+                item_name = id_to_name[kwargs["item_id"]]
+                print(f"\n{item_name} listing added.\n")
 
             elif action == "show":
                 if args[0] == "all":
