@@ -146,9 +146,11 @@ async def listings(
     user_listings = await extract_user_listings(session, user, id_to_name, headers)
     if not user_listings:
         return (False, "No listings available.", [])
-    filtered_item_listings = filter_listings(user_listings, rank, status="all")
+    filtered_user_listings = filter_listings(user_listings, rank, status="all")
+    if not filtered_user_listings:
+        return (False, "No listings match specified filters.", [])
     sorted_user_listings, sort_order = sort_listings(
-        filtered_item_listings, sort, order, {**DEFAULT_ORDERS, "price": "desc"}
+        filtered_user_listings, sort, order, {**DEFAULT_ORDERS, "price": "desc"}
     )
     data_rows = build_listings_rows(sorted_user_listings, max_ranks)
     column_widths = determine_widths(data_rows, sort)
@@ -175,7 +177,7 @@ async def seller(
         return (False, "No listings available.", [])
     filtered_seller_listings = filter_listings(seller_listings, rank, status="all")
     if not filtered_seller_listings:
-        return (False, "No listings match the filters.", [])
+        return (False, "No listings match specified filters.", [])
     sorted_seller_listings, sort_order = sort_listings(
         filtered_seller_listings, sort, order, DEFAULT_ORDERS
     )

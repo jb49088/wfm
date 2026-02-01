@@ -1,5 +1,7 @@
 from typing import Any
 
+# ===================================== ADD ======================================
+
 
 def validate_add_args(
     kwargs: dict[str, Any],
@@ -51,6 +53,9 @@ def validate_add_args(
             return (False, f"Invalid rank (0-{max_rank}).")
 
     return (True, None)
+
+
+# ==================================== SELLER ====================================
 
 
 def validate_seller_listing_selection(
