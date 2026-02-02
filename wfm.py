@@ -496,6 +496,7 @@ async def wfm() -> None:
                 status_response_event = asyncio.Event()
                 await status_queue.put((json.dumps(error), status_response_event))
                 await status_response_event.wait()
+                print()
 
             elif action == "sync":
                 success, error = await sync(
