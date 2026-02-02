@@ -179,21 +179,20 @@ async def wfm() -> None:
                     print("\nNo item specified.\n")
                     continue
                 if args[0].isdigit():
-                    if current_listings:
-                        listing_index = int(args[0]) - 1
-                        if not 0 <= listing_index < len(current_listings):
-                            print("\nInvalid listing number.\n")
-                            continue
-                        _, kwargs = parse_search_args(args)
-                        success, error = validate_search_args(kwargs)
-                        if not success:
-                            print(f"\n{error}\n")
-                            continue
-                        item_id = current_listings[listing_index]["itemId"]
-                        item_slug = id_to_slug[item_id]
-                    else:
+                    if not current_listings:
                         print("\nNo listings available.\n")
                         continue
+                    listing_index = int(args[0]) - 1
+                    if not 0 <= listing_index < len(current_listings):
+                        print("\nInvalid listing number.\n")
+                        continue
+                    _, kwargs = parse_search_args(args)
+                    success, error = validate_search_args(kwargs)
+                    if not success:
+                        print(f"\n{error}\n")
+                        continue
+                    item_id = current_listings[listing_index]["itemId"]
+                    item_slug = id_to_slug[item_id]
                 else:
                     item, kwargs = parse_search_args(args)
                     success, error = validate_search_args(kwargs)
@@ -384,6 +383,11 @@ async def wfm() -> None:
                 kwargs = parse_edit_args(args)
 
                 listing = current_listings[listing_index]
+
+                if "id" not in listing:
+                    print("\nCannot modify other users' listings.\n")
+                    continue
+
                 for field in ["price", "quantity", "rank", "visible"]:
                     kwargs.setdefault(field, listing[field])
 
@@ -408,44 +412,92 @@ async def wfm() -> None:
                 print(f"\nUpdated {listing['item']} listing.\n")
 
             elif action == "bump":
-                if args[0] == "all":
-                    print("\nBumping all listings...\n")
-                    user_listings = await extract_user_listings(
-                        session, user_info["slug"], id_to_name, authenticated_headers
+                if not args:
+                    print("\nNo listing specified.\n")
+                    continue
+                if args[0].isdigit():
+                    if not current_listings:
+                        print("\nNo listings available.\n")
+                        continue
+                    listing_index = int(args[0]) - 1
+                    if not 0 <= listing_index < len(current_listings):
+                        print("\nInvalid listing number.\n")
+                        continue
+                    listing = current_listings[listing_index]
+
+                    if "id" not in listing:
+                        print("\nCannot bump other users' listings.\n")
+                        continue
+
+                    fields = ["price", "quantity", "rank", "visible"]
+                    kwargs = {
+                        field: listing[field]
+                        for field in fields
+                        if listing[field] is not None
+                    }
+
+                    success, error = validate_edit_args(
+                        kwargs,
+                        listing["itemId"],
+                        id_to_name,
+                        id_to_max_rank,
+                        id_to_tags,
+                        id_to_bulk_tradable,
                     )
-                    sorted_listings, _ = sort_listings(
-                        user_listings, "updated", "asc", DEFAULT_ORDERS
-                    )
-                    for listing in sorted_listings:
-                        await edit_listing(
-                            session,
-                            authenticated_headers,
-                            listing["id"],
-                            # listing["itemId"],
-                            # id_to_tags,
-                            # id_to_bulkTradable,
-                            listing["price"],
-                            listing["quantity"],
-                            listing["rank"],
-                            listing["visible"],
-                        )
-                        print(f"Bumped {listing['item']} listing.")
-                        await asyncio.sleep(0.5)  # Rate limit
-                else:
-                    listing = current_listings[int(args[0]) - 1]
+                    if not success:
+                        print(f"\n{error}\n")
+                        continue
+
                     await edit_listing(
                         session,
                         authenticated_headers,
                         listing["id"],
-                        # listing["itemId"],
-                        # id_to_tags,
-                        # id_to_bulkTradable,
-                        listing["price"],
-                        listing["quantity"],
-                        listing["rank"],
-                        listing["visible"],
+                        **kwargs,
                     )
                     print(f"\nBumped {listing['item']} listing.")
+                elif args[0] == "all":
+                    user_listings = await extract_user_listings(
+                        session, user_info["slug"], id_to_name, authenticated_headers
+                    )
+                    if not user_listings:
+                        print("\nNo listings available.\n")
+                        continue
+                    sorted_listings, _ = sort_listings(
+                        user_listings, "updated", "asc", DEFAULT_ORDERS
+                    )
+                    print("\nBumping all listings...\n")
+                    for listing in sorted_listings:
+                        fields = ["price", "quantity", "rank", "visible"]
+                        kwargs = {
+                            field: listing[field]
+                            for field in fields
+                            if listing[field] is not None
+                        }
+
+                        success, error = validate_edit_args(
+                            kwargs,
+                            listing["itemId"],
+                            id_to_name,
+                            id_to_max_rank,
+                            id_to_tags,
+                            id_to_bulk_tradable,
+                        )
+                        if not success:
+                            print(f"\n{error}\n")
+                            continue
+
+                        await edit_listing(
+                            session,
+                            authenticated_headers,
+                            listing["id"],
+                            **kwargs,
+                        )
+                        print(f"Bumped {listing['item']} listing.")
+                        await asyncio.sleep(0.5)  # Rate limit
+
+                else:
+                    print("\nInvalid listing specifier.\n")
+                    continue
 
                 print()
 
@@ -464,8 +516,8 @@ async def wfm() -> None:
                     print("\nCannot copy own listings.\n")
                     continue
                 listing_to_copy = current_listings[listing_index]
-                error = copy(listing_to_copy, id_to_max_rank)
-                print(f"\nCopied to clipboard: {error}\n")
+                message = copy(listing_to_copy, id_to_max_rank)
+                print(f"\nCopied to clipboard: {message}\n")
 
             elif action == "links":
                 success, error = await links(

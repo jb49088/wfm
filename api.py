@@ -203,8 +203,9 @@ async def edit_listing(
     listing_id: str,
     price: int,
     quantity: int,
-    rank: int,
     visible: bool,
+    rank: int | None = None,
+    per_trade: int | None = None,
 ) -> None:
     payload = {
         "platinum": price,
@@ -212,6 +213,12 @@ async def edit_listing(
         "rank": rank,
         "visible": visible,
     }
+
+    if rank is not None:
+        payload["rank"] = rank
+
+    if per_trade is not None:
+        payload["perTrade"] = per_trade
 
     async with session.patch(
         url=f"https://api.warframe.market/v2/order/{listing_id}",
