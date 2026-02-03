@@ -432,18 +432,6 @@ async def wfm() -> None:
                         if listing[field] is not None
                     }
 
-                    success, error = validate_edit_args(
-                        kwargs,
-                        listing["itemId"],
-                        id_to_name,
-                        id_to_max_rank,
-                        id_to_tags,
-                        id_to_bulk_tradable,
-                    )
-                    if not success:
-                        print(f"\n{error}\n")
-                        continue
-
                     await edit_listing(
                         session,
                         authenticated_headers,
@@ -469,18 +457,6 @@ async def wfm() -> None:
                             for field in fields
                             if listing[field] is not None
                         }
-
-                        success, error = validate_edit_args(
-                            kwargs,
-                            listing["itemId"],
-                            id_to_name,
-                            id_to_max_rank,
-                            id_to_tags,
-                            id_to_bulk_tradable,
-                        )
-                        if not success:
-                            print(f"\n{error}\n")
-                            continue
 
                         await edit_listing(
                             session,
