@@ -2,10 +2,6 @@
 # =                                     WFM                                      =
 # ================================================================================
 
-# TODO: implement project-wide error handling
-# TODO: make current listings only get filled if showed listings
-# TODO: switch to result objects
-
 import asyncio
 import json
 import shlex
