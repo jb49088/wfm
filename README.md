@@ -15,10 +15,10 @@ Unofficial REPL-style CLI frontend and automated listings manager for warframe.m
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
 Python                          10            392             70           1582
-Markdown                         1             12              4             33
+Markdown                         1             10              4             33
 Text                             1              0              0             33
 -------------------------------------------------------------------------------
-SUM:                            12            404             74           1648
+SUM:                            12            402             74           1648
 -------------------------------------------------------------------------------
 ```
 <!-- CODE_STATISTICS_END -->
