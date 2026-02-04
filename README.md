@@ -45,3 +45,12 @@ wfm
 1 directory, 12 files
 ```
 <!-- PROJECT_STRUCTURE_END -->
+
+### Screenshots
+
+<img width="1568" height="888" alt="Screenshot 2026-02-04 032135" src="https://github.com/user-attachments/assets/3b6a9a8c-8975-436e-a0e2-631ffc3b9810" />
+<img width="1568" height="888" alt="Screenshot 2026-02-04 032245" src="https://github.com/user-attachments/assets/3907f5a5-d834-4a36-937d-a89d1fec5196" />
+
+### Get Cookies
+
+https://github.com/user-attachments/assets/bacb3f8b-5d9a-440c-bb5c-f44e30b13f8e
