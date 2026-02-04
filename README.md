@@ -6,3 +6,42 @@ This application bypasses standard authentication measures by acting as your bro
 
 Unofficial REPL-style CLI frontend and automated listings manager for warframe.market.
 
+<!-- CODE_STATISTICS_START -->
+
+### Code Statistics
+
+```
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+Python                          10            392             70           1582
+Markdown                         1             12              4             33
+Text                             1              0              0             33
+-------------------------------------------------------------------------------
+SUM:                            12            404             74           1648
+-------------------------------------------------------------------------------
+```
+<!-- CODE_STATISTICS_END -->
+
+<!-- PROJECT_STRUCTURE_START -->
+
+### Project Structure
+
+```
+wfm
+├── api.py
+├── auth.py
+├── commands.py
+├── config.py
+├── display.py
+├── filters.py
+├── parsers.py
+├── README.md
+├── requirements.txt
+├── validators.py
+├── websocket.py
+└── wfm.py
+
+1 directory, 12 files
+```
+<!-- PROJECT_STRUCTURE_END -->
