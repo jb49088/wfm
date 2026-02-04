@@ -525,8 +525,6 @@ async def wfm() -> None:
             elif action == "sync":
                 success, error = await sync(
                     id_to_name,
-                    id_to_tags,
-                    id_to_bulk_tradable,
                     user_info["slug"],
                     session,
                     authenticated_headers,

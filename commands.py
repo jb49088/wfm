@@ -432,8 +432,6 @@ def _get_log_lines(log_path: Path, state: dict[str, int]) -> tuple[list[str], in
 
 
 async def _update_listings(
-    id_to_tags: dict[str, set[str]],
-    id_to_bulkTradable: dict[str, bool],
     listings: list[dict[str, Any]],
     trades: list[dict[str, tuple[str, ...]]],
     session: aiohttp.ClientSession,
@@ -484,14 +482,14 @@ async def _update_listings(
 
         await asyncio.sleep(0.5)  # Rate limit
 
+    print()
+
     if not sync_occurred:
         print("\nNo listings synced.\n")
 
 
 async def sync(
     id_to_name: dict[str, str],
-    id_to_tags: dict[str, set[str]],
-    id_to_bulkTradable: dict[str, bool],
     user: str,
     session: aiohttp.ClientSession,
     headers: dict[str, str],
@@ -507,8 +505,6 @@ async def sync(
     if not trade_chunks:
         return (False, "No trades found.")
     trades = _parse_trade_items(trade_chunks)
-    await _update_listings(
-        id_to_tags, id_to_bulkTradable, user_listings, trades, session, headers
-    )
+    await _update_listings(user_listings, trades, session, headers)
 
     return (True, None)
