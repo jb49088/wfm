@@ -133,7 +133,7 @@ async def wfm() -> None:
                 await initial_status_event.wait()
                 break  # Success
 
-            except aiohttp.ClientResponseError:
+            except (ValueError, aiohttp.ClientResponseError):
                 websocket_task.cancel()
 
                 if attempt == 3:
